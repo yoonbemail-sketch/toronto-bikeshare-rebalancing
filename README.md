@@ -1,7 +1,7 @@
 # Toronto Bike Share: Overnight Rebalancing with Optimization
 
-> **Status:** Phase 1 (data) complete. Analysis and results sections are
-> placeholders and will be filled with real numbers as each phase is completed.
+> **Status:** Phases 1 (data) and 2 (exploratory analysis) complete. Results
+> sections are placeholders until the optimization phase is finished.
 
 ## The problem in one paragraph
 
@@ -78,7 +78,71 @@ this model relates to it, is in [docs/CURRENT_PRACTICE.md](docs/CURRENT_PRACTICE
 
 ## Key findings from the data
 
-_To be added in Phase 2._
+All figures are for 2025. "Working days" means Monday–Friday excluding the five
+statutory holidays in May–Oct; the data confirms holidays behave like weekends
+(2.8% of holiday trips start 7–9am, vs 3.7% on weekends and 11.8% on working days).
+Script: [src/eda.py](src/eda.py). Per-station numbers:
+[outputs/tables/station_morning_profile.csv](outputs/tables/station_morning_profile.csv).
+
+**1. Demand is seasonal: May–October carries 76.5% of the year's 7.79M trips.**
+July peaks at 1.19M. That is why the study uses May–Oct.
+
+![Trips by month](outputs/figures/trips_by_month.png)
+
+**2. Working days and weekends have similar volume but a different shape.**
+Both average about 32,000 trips a day. Working days have sharp commuter peaks
+at 8am and 5pm; weekends have one broad afternoon hump. Members (annual pass
+holders) make 83% of 6–10am working-day trips, compared with 73% of all trips.
+Commuters repeat the same journeys, so the morning pattern recurs day after day.
+That makes a fixed overnight plan reasonable, and it confirms 6–10am as the
+window to protect.
+
+![Trips by hour and rider type](outputs/figures/trips_by_hour_user.png)
+
+**3. The study stations are the busiest in the system.** 16 of the 20 busiest
+stations are study stations. The other four are seasonal Toronto Island
+stations, a station removed after 2025, and one station just west of the
+downtown boundary.
+
+![Busiest stations](outputs/figures/top_stations.png)
+
+**4. In the morning, the downtown edges empty and the core fills, and this
+reverses in the evening.** On an average working morning, 10 study stations
+lose bikes and 24 gain them. The biggest losers are residential edges: Fort
+York/CityPlace (−32 bikes), Bathurst/Front (−26), Regent Park (−17) and
+Bay/Wellesley (−16). The biggest gainers are offices and transit: Bay/Albert (+32),
+York/Queens Quay (+25) and Union Station (+18). Morning and evening net flows
+are strongly negatively correlated (−0.76, excluding the two extreme stations
+below).
+
+![Net flow heatmap](outputs/figures/net_flow_heatmap.png)
+![Morning vs evening](outputs/figures/am_vs_pm_net_flow.png)
+
+**5. The imbalance is consistent enough to plan for, and overnight
+repositioning can absorb it at 37 of the 40 stations.** For the strongly
+imbalanced stations, the direction of the morning flow is the same on almost
+every day (the 10th–90th percentile range stays on one side of zero). For 37
+stations, the morning swing fits within dock capacity on more than 90% of
+mornings. So a suitable 6am starting level can prevent failures. For example,
+Fort York needs about 34 of its 47 docks filled on a typical morning.
+
+**6. Three stations cannot be fixed overnight: King St W / Bay St, Temperance St
+and Front St W / Bay St.** They gain 255, 175 and 56 bikes per morning, against
+39, 55 and 19 docks. The recorded trips there could only have ended at those
+stations if bikes were being cleared throughout the morning, which looks like
+the operator's valet service or daytime vans. The station feed does not mark them
+as valet stations, but it is a winter snapshot. These are daytime or valet
+stations, not overnight ones.
+
+![Stability and feasibility](outputs/figures/morning_stability_feasibility.png)
+
+**What this means for the optimization**
+
+- Model the 37 stations that overnight repositioning can help. Report the three
+  valet-type stations separately instead of letting them dominate the objective.
+- Starting levels must be uneven: near-full at the residential edges and
+  near-empty in the core. A uniform rule such as "fill everything to 50%" should
+  do poorly. Phase 3 tests this directly.
 
 ## Assumptions
 
@@ -97,9 +161,14 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 
 ## Limitations
 
-- **Censored demand:** trip data records only completed trips, so riders turned
-  away by an empty station are invisible. Failures avoided are therefore a lower
-  bound.
+- **Unrecorded failures (censored demand):** trip data records only completed
+  trips. A rider who finds a station empty and walks away leaves no record. A
+  rider who finds dock A full and rides on to dock B appears as a normal trip
+  ending at B, and the intended destination is lost. Failures are therefore
+  estimated by replaying the recorded trips against a starting inventory, and
+  the estimates are lower bounds, because the recorded arrivals at A already
+  exclude riders who were turned away. Measuring failures directly would need
+  minute-by-minute station counts, which are not published.
 - **No historical inventory:** bikes per station over time are not published,
   so the overnight starting level is estimated.
 - **Stations modelled independently** in the morning replay.

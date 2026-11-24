@@ -27,7 +27,10 @@ TRIP_YEAR = 2025               # most recent full year on the portal (checked 20
 # --- Study scope -------------------------------------------------------------
 N_STATIONS = 40                 # busiest downtown stations; sized for the Gurobi license
 # Downtown = 13 City neighbourhoods approximating the Downtown Plan area (list in clean.py)
-SEASON_MONTHS = range(5, 11)    # May-October, weekdays only
+SEASON_MONTHS = range(5, 11)    # May-October, working days only
+# Ontario statutory holidays in the season: treated like weekends, not working days
+HOLIDAYS_2025 = ["2025-05-19", "2025-07-01", "2025-08-04", "2025-09-01", "2025-10-13"]
+PM_WINDOW = (15, 19)            # evening peak, used to show the AM/PM reversal
 MORNING_WINDOW = (6, 10)        # [start, end) hour of the weekday morning peak we protect
 
 # --- Operations ---------------------------------------------------------------
