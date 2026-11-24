@@ -1,7 +1,7 @@
 # Toronto Bike Share: Overnight Rebalancing with Optimization
 
-> **Status:** Phases 1 (data) and 2 (exploratory analysis) complete. Results
-> sections are placeholders until the optimization phase is finished.
+> **Status:** complete through Phase 3 (data → analysis → optimization →
+> evaluation). Every number below is reproduced by `./run_all.sh`.
 
 ## The problem in one paragraph
 
@@ -14,8 +14,25 @@ doing nothing and with a simple rule of thumb.
 
 ## Headline results
 
-_To be added in Phase 3: morning failures avoided against bikes moved, on
-held-out days._
+The test set is 43 held-out working-day mornings in Sep–Oct 2025, at the 37
+downtown stations that overnight repositioning can help:
+
+| Overnight policy | Bikes moved per night | Failed pickups + returns, 6–10am |
+|---|---|---|
+| No rebalancing | 0 | **73.7** per morning (3.9% of station visits) |
+| Rule of thumb: fill every station to 50% | 73 | **82.1** (11% *worse* than doing nothing) |
+| **Optimised plan (Gurobi MIP)** | 75 | **27.8 (−62%)** |
+
+- **The optimised plan beat no rebalancing on all 43 test mornings.**
+- **75 bikes per night is about four loads for a 20-bike van.** Beyond 75–100
+  bikes, extra moves stop helping.
+- **The intuitive rule backfires.** Residential edge stations need to start
+  nearly full and the office core nearly empty. Evening everything out to 50%
+  moves bikes the wrong way.
+- **Sequencing matters once the van is full.** For one example night, an
+  optimised van route completes 125 of 126 planned pickups and drops in 24.9 km.
+  A greedy "nearest useful station" route drives 20.2 km but leaves 36 undone.
+- Failure counts are lower bounds; see [Limitations](#limitations).
 
 ## Data
 
@@ -144,6 +161,96 @@ stations, not overnight ones.
   near-empty in the core. A uniform rule such as "fill everything to 50%" should
   do poorly. Phase 3 tests this directly.
 
+## Optimization results
+
+Scripts: [src/morning.py](src/morning.py) (replay and failure curves),
+[src/rebalance.py](src/rebalance.py) (overnight plan and evaluation),
+[src/routing.py](src/routing.py) (van route). The formulations are written out
+in [docs/PLAN.md](docs/PLAN.md).
+
+### Overnight repositioning
+
+**Model.** For each station and each possible 6am level *y*, replaying the
+May–Aug training mornings gives the expected failures *g(y)*. The model picks
+one level per station to minimise total expected failures. Bikes can only be
+moved between stations, and at most a budget *B* of bikes can be moved per
+night. The model has 1,225 variables and 76 constraints, inside the free
+license's 2,000 limit, and each night solves in a fraction of a second.
+
+**Evaluation.** For each Sep–Oct test night:
+1. Estimate the no-rebalancing 6am inventory.
+2. Compute a plan with each policy.
+3. Replay that real morning from the planned levels and count failures.
+
+The test mornings are never used to build the plan.
+
+![Budget curve](outputs/figures/budget_curve.png)
+
+| Bikes moved per night | 0 | 25 | 50 | 75 | 100 | no limit (142) |
+|---|---|---|---|---|---|---|
+| Optimised: failures per morning | 73.7 | 46.3 | 32.9 | 27.8 | 27.1 | 28.8 |
+| 50% rule: failures per morning | 73.7 | 74.9 | 79.3 | 82.1 | 84.1 | 84.8 |
+
+- **Diminishing returns:** the first 25 bikes remove 27 failures. The step from
+  75 to 100 removes less than one. Beyond about 100 bikes the plan starts
+  fitting May–Aug patterns that don't fully hold in Sep–Oct, and test failures
+  rise slightly. That is why the full table is
+  reported, not only the best point.
+- **Empty stations are easier to fix than full ones.** At 75 bikes, failed
+  pickups fall from 39.1 to 8.6 per morning, and failed returns fall from 34.6
+  to 19.2. The plan is limited by the number of empty docks it can create in the
+  core, because those bikes must fit somewhere else.
+
+Full results: [rebalancing_results.csv](outputs/tables/rebalancing_results.csv),
+per night: [rebalancing_by_night.csv](outputs/tables/rebalancing_by_night.csv).
+
+**What a plan looks like.** On Friday 26 Sep 2025 (the median test night), the
+plan fills the residential edges (Bathurst/Front 10 → 31 bikes, Bay/Wellesley
+2 → 21) and empties the core (Bay/Albert 33 → 16). Failures that morning: 75
+with no rebalancing, 65 with the 50% rule, 17 with the plan.
+
+![Example plan](outputs/figures/plan_example.png)
+
+### Van routing for one cluster
+
+**Model.** This is a single-van pickup-and-delivery tour from the depot at
+25 Booth Ave, covering the 12 stations with the largest moves in the example
+plan. Those 12 account for 126 of its 150 pickups and drops. Binary arc
+variables choose the route, load variables enforce van capacity, and visit-order
+constraints prevent disconnected sub-tours. Unfinished moves are penalised. The
+model has 336 variables and 326 constraints and solves to proven optimality.
+
+![Route map](outputs/figures/route_map.png)
+
+| Van capacity | Optimised route | Greedy nearest-useful route |
+|---|---|---|
+| 10 bikes | 28.5 km, 28 of 126 not done | 21.1 km, 51 not done |
+| 20 bikes | 24.9 km, **1** not done | 20.2 km, **36** not done |
+| 30 bikes | 20.8 km, 0 not done | 20.2 km, 10 not done |
+
+- The greedy route is shorter because it skips work. It arrives full where
+  bikes must be picked up, or empty where they must be dropped. The optimised
+  route visits stations with surplus bikes before stations that need them.
+- A 10-bike van cannot finish this plan in one tour even with an optimal
+  route. The gap closes at 20 bikes, and at 30 bikes the route is both complete
+  and short. Van size is a real lever for this operation.
+
+Stop list for the 20-bike van:
+[route_stops_Q20.csv](outputs/tables/route_stops_Q20.csv).
+
+### What an operator could take from this
+
+1. **Set station-specific targets from history, not a uniform fill level.**
+   This is the single biggest gain, and it costs nothing but analysis.
+2. **About 75 bikes per night (four 20-bike van loads) captures most of the
+   benefit** for this downtown group. Effort beyond that has little value
+   overnight and is better spent on daytime and valet work.
+3. **Three stations need a daytime answer.** King/Bay, Temperance St and
+   Front/Bay receive several times their dock count every morning, which no
+   overnight plan can fix.
+4. **Route with van capacity in mind.** A good plan carried out by a
+   capacity-blind route loses about 30% of its moves.
+
 ## Assumptions
 
 Every assumption is set in [src/config.py](src/config.py) and can be changed there.
@@ -156,7 +263,12 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 | Van capacity | 10, 20 and 30 bikes (20 central) | No public figure exists, so it is run as scenarios ([current practice](docs/CURRENT_PRACTICE.md)) |
 | Depot | 25 Booth Ave | Operator depot used in the prior Toronto study |
 | Road distance | 1.3 × straight-line distance | Standard circuity approximation; no road network used |
-| Overnight starting inventory | Simulated from the previous day's trips | No inventory history is published; see [PLAN.md](docs/PLAN.md) |
+| No-rebalancing 6am inventory | Each station starts the previous day at 6am 50% full; that day's real trips are replayed to 6am | No inventory history is published. One day of drift is mild, so the improvement is conservative |
+| Failure weights | A failed pickup and a failed return count equally | No basis to weight one above the other |
+| Train / test split | Plans learn from May–Aug mornings and are scored on Sep–Oct mornings | Mirrors planning from past weeks |
+| Bike conservation | The overnight plan only moves bikes between the 37 stations | No bikes added to or removed from the group |
+| Depot stock | In the routing model the van may leave the depot loaded and bring bikes back | The routed 12-station subset is not balanced on its own |
+| Unfinished-move penalty | 5 km-equivalent per pickup or drop not done | Makes completing the plan the priority; distance breaks ties |
 | Scope | Overnight rebalancing only | The real operation runs 24/7; stations overnight moves cannot fix are flagged for daytime/valet service |
 
 ## Limitations
@@ -171,13 +283,24 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
   minute-by-minute station counts, which are not published.
 - **No historical inventory:** bikes per station over time are not published,
   so the overnight starting level is estimated.
-- **Stations modelled independently** in the morning replay.
+- **Stations modelled independently** in the morning replay: a failed pickup at
+  A does not cancel the matching return at B.
+- **Daytime rebalancing is not modelled.** The real operator also moves bikes
+  during the day, so "no rebalancing" is a reference point, not the actual
+  2025 operation. Absolute failure counts are not a forecast of what riders
+  experienced.
+- **Season drift.** Plans learned on May–Aug lose a little accuracy on Sep–Oct,
+  which shows up once more than about 100 bikes are moved.
+- **Routing covers one van and one 12-station cluster,** sized for the free
+  license. A full night with several vans would need decomposition, for example
+  routing each cluster separately, or a full license.
+- **Distances** are straight-line × 1.3, not road-network shortest paths.
 
 ## How to run
 
 ```bash
 .venv/bin/pip install -r requirements.txt
-./run_all.sh          # download → clean (EDA and optimisation added in later phases)
+./run_all.sh          # download → clean → EDA → optimise and evaluate → route
 ```
 
 Requires a Gurobi license; the free restricted license is enough. The first run

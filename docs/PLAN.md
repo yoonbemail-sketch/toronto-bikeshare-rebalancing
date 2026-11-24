@@ -16,11 +16,10 @@ How much better is that than doing nothing, or than a simple rule of thumb?
 |---|---|---|
 | 1 Data | `src/download.py`, `src/clean.py` | `data/processed/trips.parquet`, `stations.csv`, data-issues log |
 | 2 EDA | `src/eda.py` | charts in `outputs/figures/`, findings in README |
-| 3a Overnight plan | `src/rebalance.py` | target inventory per station, bikes moved |
+| 3a Overnight plan + evaluation | `src/morning.py`, `src/rebalance.py` | target inventory per station, failures on held-out days |
 | 3b Van route | `src/routing.py` | stop sequence and load for one cluster |
-| 3c Evaluation | `src/evaluate.py` | failures with vs without rebalancing, on held-out days |
 
-`run_all.sh` will run the pipeline end to end.
+`run_all.sh` runs the pipeline end to end.
 
 ## EDA questions (Phase 2)
 

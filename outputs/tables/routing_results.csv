@@ -1,0 +1,7 @@
+van_capacity,method,km,undone,moved,mip_gap
+10,Optimised route,28.46,28,98,0.0
+10,Greedy nearest-useful,21.13,51,75,
+20,Optimised route,24.85,1,125,0.0
+20,Greedy nearest-useful,20.24,36,90,
+30,Optimised route,20.84,0,126,0.0
+30,Greedy nearest-useful,20.24,10,116,

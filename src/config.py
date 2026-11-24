@@ -35,6 +35,8 @@ MORNING_WINDOW = (6, 10)        # [start, end) hour of the weekday morning peak 
 
 # --- Operations ---------------------------------------------------------------
 DEPOT_ADDRESS = "25 Booth Ave, Toronto"  # operator depot, per McNee & Miller (2023)
+DEPOT_LATLON = (43.6543954, -79.3410455)  # OpenStreetMap Nominatim geocode, Nov 2026
+ROUTE_STATIONS = 12             # stations in the routed cluster (license-sized)
 VAN_CAPACITIES = [10, 20, 30]   # ASSUMPTION: no public figure; reported as scenarios
 VAN_CAPACITY = 20               # ASSUMPTION: central case
 MOVE_BUDGET = None              # bikes handled per night; swept as a scenario, not fixed
