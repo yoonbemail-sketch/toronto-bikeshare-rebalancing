@@ -1,0 +1,41 @@
+station_id,name,lat,lon,capacity,is_valet,neighbourhood,downtown,starts_2025,ends_2025,starts_season_wkday,ends_season_wkday,trips_season_wkday,name_in_trips,name_matches_trips
+7015,King St W / Bay St (West Side),43.64852,-79.380576,39,False,Yonge-Bay Corridor,True,31634,62531,22809,43560,66369,King St W / Bay St (West Side),True
+7076,York St / Queens Quay W,43.640132,-79.380464,57,False,Harbourfront-CityPlace,True,53523,57420,30064,31604,61668,York St / Queens Quay W,True
+7019,Temperance St Station,43.650945,-79.379498,55,False,Yonge-Bay Corridor,True,35310,47250,25140,32690,57830,Temperance St Station,True
+7017,Widmer St / Adelaide St W,43.647547634759206,-79.39155200496292,11,False,Wellington Place,True,42347,42975,23375,23831,47206,Widmer St / Adelaide St W - SMART,True
+7432,Frederick St / King St E,43.651118,-79.369411,47,False,Moss Park,True,38039,40266,22265,22970,45235,Frederick St / King St E,True
+7720,King St W / Portland St,43.644395,-79.40065430000001,31,False,Wellington Place,True,39400,40466,21887,22361,44248,King St W / Portland St - SMART,True
+7542,Queen St W / John St,43.650077,-79.391291,23,False,Kensington-Chinatown,True,37639,39704,21081,21823,42904,Queen St W / John St,True
+7078,College St / Major St,43.6576,-79.4032,15,False,University,True,39531,40811,20770,21432,42202,College St / Major St,True
+7006,Bay St / College St (East Side),43.660439,-79.385525,31,False,Yonge-Bay Corridor,True,40245,39926,20166,20221,40387,Bay St / College St (East Side),True
+7016,Bay St / Queens Quay W (Ferry Terminal),43.640978,-79.376785,35,False,St Lawrence-East Bayfront-The Islands,True,37283,38949,19970,20398,40368,Bay St / Queens Quay W (Ferry Terminal),True
+7324,King St W / Charlotte St,43.645572,-79.39399,23,False,Wellington Place,True,34874,34901,19442,19594,39036,King St W / Charlotte St,True
+7102,Nelson St / Duncan St,43.648711,-79.389728,31,False,Wellington Place,True,32407,35746,18637,20121,38758,Nelson St / Duncan St,True
+7000,Fort York  Blvd / Capreol Ct,43.63970679931218,-79.39614309573555,47,False,Harbourfront-CityPlace,True,34329,33448,19024,18525,37549,Fort York  Blvd / Capreol Ct,True
+7253,John St  / Mercer St - SMART,43.6461,-79.3895,12,False,Wellington Place,True,32660,33094,18557,18758,37315,John St  / Mercer St - SMART,True
+7462,Richmond St E / Yonge St,43.651838,-79.378743,17,False,Downtown Yonge East,True,34626,35090,18289,18506,36795,Richmond St E / Yonge St,True
+7217,Soho St / Queen St W,43.649649714291584,-79.39372141352654,15,False,Kensington-Chinatown,True,32697,34404,17880,18711,36591,Soho St / Queen St W,True
+7260,Spadina Ave / Adelaide St W,43.6472019,-79.3953394,15,False,Wellington Place,True,32009,32828,17988,18203,36191,Spadina Ave / Adelaide St W,True
+7033,Union Station,43.645609,-79.380386,43,False,St Lawrence-East Bayfront-The Islands,True,31313,35109,17427,18556,35983,Union Station,True
+7038,Dundas St W / Yonge St,43.656094,-79.381484,31,False,Yonge-Bay Corridor,True,32977,33948,17922,18060,35982,Dundas St W / Yonge St,True
+7418,College Park - Yonge St Entrance,43.65988,-79.38279,25,False,Yonge-Bay Corridor,True,32380,32822,17488,17715,35203,College Park - Yonge St Entrance,True
+7100,Dundas St E / Regent Park Blvd,43.660207,-79.361275,27,False,Regent Park,True,31701,32434,17027,17477,34504,Dundas St E / Regent Park Blvd,True
+7682,Bathurst St / Front St W,43.64134790000001,-79.4013882,35,False,Wellington Place,True,33561,34303,17047,17278,34325,Bathurst St / Front St W,True
+7816,Bay St / Dundas St W,43.655350778457056,-79.38345966759798,55,False,Yonge-Bay Corridor,True,29452,31067,16459,16647,33106,Bay St / Dundas St W,True
+7007,College St / Huron St,43.658148,-79.398167,19,False,Kensington-Chinatown,True,30957,31445,16371,16716,33087,College St / Huron St,True
+7168,Queens Quay / Yonge St,43.641646,-79.375308,47,False,St Lawrence-East Bayfront-The Islands,True,29432,31710,16020,16905,32925,Queens Quay / Yonge St,True
+7246,Yonge St / Bloor St,43.669969,-79.386532,19,False,Church-Wellesley,True,28264,28623,16107,16345,32452,Yonge St / Bloor St,True
+7002,St. George St / Bloor St W,43.66713121831853,-79.3995550638237,19,False,University,True,29946,30467,15972,16273,32245,St. George St / Bloor St W,True
+8014,Wellington St W / Blue Jays Way,43.64473387070102,-79.39168963262681,23,False,Wellington Place,True,25737,26145,15987,16149,32136,Wellington St W / Blue Jays Way,True
+7030,Bay St / Wellesley St W,43.664088,-79.387095,35,False,Bay-Cloverhill,True,36955,26353,18485,13623,32108,Bay St / Wellesley St W,True
+7018,Bremner Blvd / Rees St,43.641529,-79.386741,49,False,Harbourfront-CityPlace,True,25816,29521,14821,17111,31932,Bremner Blvd / Rees St,True
+7850,Maud St / Adelaide St W - SMART,43.6460145694434,-79.39960497726345,16,False,Wellington Place,True,27482,27827,15209,15513,30722,Maud St / Adelaide St W - SMART,True
+7123,420 Wellington St W,43.643834,-79.396649,14,False,Wellington Place,True,25847,27993,14692,15878,30570,420 Wellington St W,True
+7043,Queens Quay W / Lower Simcoe St,43.63951,-79.383717,19,False,Harbourfront-CityPlace,True,27730,28641,14766,15265,30031,Queens Quay W / Lower Simcoe St,True
+7391,Yonge St / Dundas Sq,43.655766,-79.3802,31,False,Downtown Yonge East,True,27502,28983,14623,14973,29596,Yonge St / Dundas Sq,True
+7283,Front St W / Bay St (South Side),43.64595,-79.378761,19,False,St Lawrence-East Bayfront-The Islands,True,19552,27983,11555,17791,29346,Front St W / Bay St (South Side),True
+7285,Spadina Ave / Harbord St - SMART,43.6629228,-79.4018451,36,False,University,True,31729,27643,15553,13632,29185,Spadina Ave / Harbord St - SMART,True
+7788,Queens Quay E / Lower Jarvis St,43.64365842913001,-79.36908579410101,49,False,St Lawrence-East Bayfront-The Islands,True,25506,26055,14448,14653,29101,Queens Quay E / Lower Jarvis St,True
+7021,Bay St / Albert St,43.653264,-79.382458,63,False,Yonge-Bay Corridor,True,23726,25343,14151,14623,28774,Bay St / Albert St,True
+7261,Queens Quay E / Lower Sherbourne St,43.645215,-79.364898,26,False,St Lawrence-East Bayfront-The Islands,True,25962,26524,14258,14477,28735,Queens Quay E / Lower Sherbourne St,True
+7001,Wellesley Station Green P,43.66496415990742,-79.38355031526893,23,False,Church-Wellesley,True,30635,23911,16146,12545,28691,Wellesley Station Green P,True

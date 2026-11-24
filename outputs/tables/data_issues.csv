@@ -1,0 +1,14 @@
+step,rows,action,note
+raw rows,7812520,loaded,12 monthly files
+End_Station_Name wrong (Jan-Oct),0,column ignored,Jan-Oct end names copy the start name; end IDs verified via implied speed
+duplicate trip_id,0,dropped,
+missing station ID or timestamp,6957,dropped,mostly trips with no end station (bike not returned to a dock)
+duration field disagrees with timestamps by >60 s,265,kept,duration recomputed from timestamps
+trip shorter than 60 s,16889,dropped,"false starts / immediate re-docks, standard industry filter"
+trip longer than 24 h,12,dropped,likely lost or unreturned bikes
+station ID not in current GBFS feed,785885,"kept, flagged","64 start IDs; no coordinates, so these stations cannot enter the study set"
+GBFS station with capacity 0,0,excluded from study set,
+Toronto Islands stations in feed,0,excluded from study set,"ferry access only; seasonal, so absent from a winter snapshot"
+downtown stations with no 2025 trips,20,excluded from study set,opened after 2025 (e.g. 7004 University Ave / Elm St); no history to model
+study stations whose 2025 trip name differs from current GBFS name,0,reviewed,see study_stations.csv: name vs name_in_trips
+clean trips written,7788662,saved,

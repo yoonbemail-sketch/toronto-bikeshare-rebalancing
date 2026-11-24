@@ -192,10 +192,11 @@ How the operator works today, and what is not publicly known, is summarised in
    The one prior Toronto study rebuilt inventory from its own per-minute
    snapshot archive, which is not public.
 2. **Season:** weekdays from May to October only, for now.
-3. **Station subset:** the 40 busiest stations inside downtown. "Downtown" means
-   the City's Downtown Plan area: roughly Bathurst St to the Don River, and Lake
-   Ontario to Bloor St / the CPR rail corridor. The exact polygon will be built
-   and plotted in Phase 1.
+3. **Station subset:** the 40 busiest downtown stations (by May–Oct weekday
+   trip starts plus ends). "Downtown" means 13 City neighbourhoods that approximate the
+   Downtown Plan area, since the Plan boundary is not published as open data.
+   Stations must still exist today (capacity is needed) and have 2025 history.
+   Toronto Island stations are excluded (ferry access only). See README, Data.
 4. **Van capacity:** no public source gives a figure. It is treated as a
    scenario: Q ∈ {10, 20, 30} bikes, with 20 as the central case.
 5. **Depot:** 25 Booth Ave, the depot used in the prior Toronto study.

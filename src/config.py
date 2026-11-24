@@ -18,11 +18,15 @@ CKAN_PACKAGE_URL = (
     "?id=bike-share-toronto-ridership-data"
 )
 GBFS_STATION_INFO_URL = "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_information"
-TRIP_YEAR = None  # set in Phase 1 to the most recent full year in the CKAN package
+NEIGHBOURHOODS_URL = (  # City of Toronto 158 neighbourhoods, WGS84
+    "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/fc443770-ef0a-4025-9c2c-2cb558bfab00"
+    "/resource/0719053b-28b7-48ea-b863-068823a93aaa/download/neighbourhoods-4326.geojson"
+)
+TRIP_YEAR = 2025               # most recent full year on the portal (checked 2026-11-24)
 
 # --- Study scope -------------------------------------------------------------
 N_STATIONS = 40                 # busiest downtown stations; sized for the Gurobi license
-DOWNTOWN = "City Downtown Plan area: Bathurst-Don River, Lake Ontario-Bloor/CPR"  # polygon built in Phase 1
+# Downtown = 13 City neighbourhoods approximating the Downtown Plan area (list in clean.py)
 SEASON_MONTHS = range(5, 11)    # May-October, weekdays only
 MORNING_WINDOW = (6, 10)        # [start, end) hour of the weekday morning peak we protect
 
