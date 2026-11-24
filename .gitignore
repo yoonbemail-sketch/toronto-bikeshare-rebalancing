@@ -1,0 +1,17 @@
+# Environment
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Data: large and fully regenerable by src/download.py + src/clean.py
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Gurobi artifacts
+gurobi.log
+*.lp
+*.mps
+*.sol
