@@ -62,7 +62,11 @@ Each question feeds a later decision.
 - **Limitation 1: censored demand.** Trip data records only trips that happened.
   Riders turned away by an empty station leave no record, so true demand at
   stations that often run empty is underestimated. Results will be reported as
-  "failures avoided on the trips we can see," which is a lower bound.
+  failures on the trips we can see. That count is a likely undercount, not a
+  lower bound: most missing riders were turned away, which hides failures, but
+  a missing rider can also hide a success that would have prevented one (an
+  unrecorded pickup frees a dock for a recorded return). Failures avoided is
+  therefore an estimate, not a bound in either direction.
 - **Limitation 2: no inventory history.** The open data has no historical count
   of bikes per station, so the overnight starting inventory b_i must be
   estimated. Options are listed under "Decisions for review" below.
@@ -77,7 +81,8 @@ pick up or drop off overnight to get there.
 
 Sets and data
 
-- S: the 40 study stations. C_i: dock capacity (from GBFS).
+- S: the 40 study stations. C_i: usable capacity, the GBFS dock count minus
+  `CAPACITY_BUFFER` unusable docks (0 by default; 1 and 2 as a sensitivity).
 - b_i: estimated inventory at the start of the night.
 - g_i(y): expected morning failures if station i starts at y bikes (from data).
 - B: overnight handling budget (bikes moved). λ: small cost per bike moved, so

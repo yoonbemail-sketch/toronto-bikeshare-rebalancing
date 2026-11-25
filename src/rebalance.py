@@ -176,6 +176,7 @@ def plot_plan(st, b, y_opt, y_rule, title):
 def main(scope):
     sfx = "" if scope == "downtown" else f"_{scope}"  # output file suffix
     st, valet = M.load_study(scope)
+    st = M.usable(st)  # capacity minus config.CAPACITY_BUFFER (0 by default)
     print(f"{len(st)} stations; excluded as valet-type: {', '.join(valet.name)}")
     ev = M.load_events(st.index)
     days = M.working_days()

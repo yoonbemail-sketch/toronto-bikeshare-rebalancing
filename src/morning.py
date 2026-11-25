@@ -5,8 +5,16 @@ A station's day is a time-ordered list of events: -1 when a bike is taken,
   - a pickup at an empty station is a FAILED PICKUP (inventory stays 0)
   - a return at a full station is a FAILED RETURN (inventory stays at capacity)
 Stations are replayed independently: a failed pickup at A does not cancel the
-matching return at B. These counts are lower bounds on real failures, because
-recorded trips already exclude riders who were turned away.
+matching return at B.
+
+These counts are a likely undercount of real failures: recorded trips leave
+out riders who were turned away, and most of that missing demand would add
+failures, but a missing rider can also remove one (an unrecorded pickup frees a
+dock for a recorded return), so the count is not a strict bound. Failures
+avoided (baseline minus plan) is an estimate, not a bound in either direction.
+
+Capacity in the replay is usable capacity: dock count minus
+config.CAPACITY_BUFFER (see usable()).
 """
 import numpy as np
 import pandas as pd
@@ -33,11 +41,16 @@ def candidates(scope):
     raise SystemExit(f"Unknown scope {scope!r}; use 'downtown' or 'wide'")
 
 
-def swing_exceeds_capacity(ev, stations, days):
-    """Share of mornings on which a station's swing (highest minus lowest point of
-    its running bike count) exceeds its capacity: no 6am level could avoid a failure."""
+def swing_exceeds_capacity(ev, stations, days, hours=None):
+    """Share of days on which a station's swing (highest minus lowest point of
+    its running bike count) exceeds its capacity: no starting level could avoid
+    a failure in that window. hours = (start, end) relative to midnight of each
+    day (a negative start reaches into the previous day); default the morning
+    window."""
+    lo, hi = config.MORNING_WINDOW if hours is None else hours
+    h = pd.Timedelta(hours=1)
     share = {}
-    mornings = [morning(ev, d) for d in days]
+    mornings = [window(ev, d + lo * h, d + hi * h) for d in days]
     for sid, row in stations.iterrows():
         hits = 0
         for m in mornings:
@@ -54,6 +67,17 @@ def load_study(scope="downtown"):
     share = swing_exceeds_capacity(load_events(cand.index), cand, working_days())
     valet = share > 0.5
     return cand[~valet.reindex(cand.index).values], cand[valet.reindex(cand.index).values]
+
+
+def usable(stations, buffer=None):
+    """Stations with capacity cut to usable docks: dock count minus `buffer`
+    (default config.CAPACITY_BUFFER), floored at 0. A disabled bike fills a dock
+    and cannot be ridden, so fewer docks are usable than GBFS lists. Apply it once,
+    after load_study, so failure curves, the no-rebalancing baseline, the plan and
+    the test replay all use the same capacity. The valet filter in load_study
+    uses dock counts, so the station set does not change with the buffer."""
+    k = config.CAPACITY_BUFFER if buffer is None else buffer
+    return stations.assign(capacity=(stations.capacity - k).clip(lower=0))
 
 
 def load_events(station_ids):

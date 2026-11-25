@@ -43,7 +43,8 @@ downtown stations that overnight repositioning can help:
   Every pickup and drop is done in both. Grouping stations so each tour's
   pickups and drops balance is essential: grouping by direction alone leaves up
   to 39% of moves undone.
-- Failure counts are lower bounds; see [Limitations](#limitations).
+- Failure counts are a likely undercount, and failures avoided is an estimate,
+  not a bound; see [Limitations](#limitations).
 
 ## Data
 
@@ -154,7 +155,10 @@ repositioning can absorb it at 37 of the 40 stations.** For the strongly
 imbalanced stations, the direction of the morning flow is the same on almost
 every day (the 10th–90th percentile range stays on one side of zero). For 37
 stations, the morning swing fits within dock capacity on more than 90% of
-mornings. So a suitable 6am starting level can prevent failures. For example,
+mornings. So a suitable 6am starting level can prevent failures. Taken
+together, 98.8% of station-mornings at those 37 fit. Over a full 24 hours only
+79.3% do: the rest needed bikes moved during the day, which this project does
+not model ([swing_vs_capacity.csv](outputs/tables/swing_vs_capacity.csv)). For example,
 Fort York needs about 34 of its 47 docks filled on a typical morning.
 
 **6. Three stations cannot be fixed overnight: King St W / Bay St, Temperance St
@@ -212,7 +216,7 @@ The test mornings are never used to build the plan.
   rise slightly. That is why the full table is
   reported, not only the best point.
 - **Empty stations are easier to fix than full ones.** At 75 bikes, failed
-  pickups fall from 39.1 to 8.6 per morning, and failed returns fall from 34.6
+  pickups fall from 39.0 to 8.6 per morning, and failed returns fall from 34.6
   to 19.1. The plan is limited by the number of empty docks it can create in the
   core, because those bikes must fit somewhere else.
 
@@ -225,6 +229,34 @@ plan fills the residential edges (Bathurst/Front 10 → 31 bikes, Bay/Wellesley
 with no rebalancing, 65 with the 50% rule, 17 with the plan.
 
 ![Example plan](outputs/figures/plan_example.png)
+
+### Sensitivity to usable capacity
+
+Disabled bikes and docks leave fewer usable docks than GBFS lists (see
+[Assumptions](#assumptions)). The downtown evaluation was rerun with every
+station's capacity cut by 1 or 2 docks, in the failure curves, the baseline,
+both plans and the test replay. Script: [src/sensitivity.py](src/sensitivity.py).
+
+| Unusable docks per station | Bikes moved per night | 0 | 25 | 50 | 75 | 100 |
+|---|---|---|---|---|---|---|
+| 0 (as reported) | Optimised | 73.7 | 46.3 | 32.9 | 27.7 | 27.2 |
+| | 50% rule | 73.7 | 74.9 | 79.3 | 82.1 | 84.0 |
+| 1 | Optimised | 75.8 | 49.2 | 35.9 | 31.0 | 30.7 |
+| | 50% rule | 75.8 | 80.0 | 84.2 | 89.3 | 91.8 |
+| 2 | Optimised | 79.5 | 53.0 | 40.2 | 35.3 | 35.4 |
+| | 50% rule | 79.5 | 86.4 | 92.9 | 98.1 | 101.6 |
+
+Failed pickups + returns per morning, 43 held-out mornings. Each failure type
+separately: [capacity_sensitivity.csv](outputs/tables/capacity_sensitivity.csv).
+
+- **The ranking holds at every budget.** The optimised plan beats no
+  rebalancing on all 43 test mornings in every case but one (42 of 43 with 2
+  docks lost and 100 bikes). The 50% rule stays worse than doing nothing, and
+  more so as capacity shrinks.
+- **So does the 75-bike point.** Across the four 25-bike steps, each extra
+  bike avoids about 1.1, 0.5, 0.2 and then 0.0 failures at every buffer.
+  Failures avoided at 75 bikes barely change (46.0, 44.8, 44.3); the absolute
+  counts rise for every policy.
 
 ### Van routing for one cluster
 
@@ -351,8 +383,9 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 | Van capacity | 10, 20 and 30 bikes (20 central) | No public figure exists, so it is run as scenarios ([current practice](docs/CURRENT_PRACTICE.md)) |
 | Depot | 25 Booth Ave | Operator depot used in the prior Toronto study |
 | Road distance | 1.3 × straight-line distance | Standard circuity approximation; no road network used |
-| No-rebalancing 6am inventory | Each station starts the previous day at 6am 50% full; that day's real trips are replayed to 6am | No inventory history is published. One day of drift is mild, so the improvement is conservative |
-| Failure weights | A failed pickup and a failed return count equally | No basis to weight one above the other |
+| No-rebalancing 6am inventory | Each station starts the previous day at 6am 50% full; that day's real trips are replayed to 6am | No inventory history is published. Over a full day, a station's swing (highest minus lowest running bike count) exceeds its dock count on 20.7% of station-days at the 37 stations (21.2% for the 6am-to-6am window replayed here), and on more than 10% of days at 23 of them. Those trips could only happen because bikes were moved during the day. So the baseline is a "no vans for a day" reference, not an estimate of the real 2025 6am state, and failures avoided are measured against that reference. Whether the real operation started mornings better or worse placed is not known |
+| Failure weights | A failed pickup and a failed return count equally | A choice, not a neutral default: a failed return usually means a detour to the next station, while a failed pickup may lose the trip. Weights are kept equal; results report each type separately so they can be weighed differently |
+| Usable capacity | Every dock is usable (`CAPACITY_BUFFER = 0`) | A disabled bike fills a dock and cannot be ridden. A live GBFS snapshot on 25 Nov 2026 found a disabled bike at 26 of the 40 study stations and a disabled dock at 5: 58 unusable docks, 4.7% of capacity, median 1 per station ([station_status_2026-11-25.csv](outputs/tables/station_status_2026-11-25.csv), from [src/status_snapshot.py](src/status_snapshot.py)). It is a November snapshot, not the 2025 season. Results with 1 and 2 unusable docks per station: [Sensitivity to usable capacity](#sensitivity-to-usable-capacity) |
 | Train / test split | Plans learn from May–Aug mornings and are scored on Sep–Oct mornings | Mirrors planning from past weeks |
 | Bike conservation | The overnight plan only moves bikes between the 37 stations | No bikes added to or removed from the group |
 | Depot stock | In the routing model the van may leave the depot loaded and bring bikes back | The routed 12-station subset is not balanced on its own |
@@ -368,18 +401,27 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
   trips. A rider who finds a station empty and walks away leaves no record. A
   rider who finds dock A full and rides on to dock B appears as a normal trip
   ending at B, and the intended destination is lost. Failures are therefore
-  estimated by replaying the recorded trips against a starting inventory, and
-  the estimates are lower bounds, because the recorded arrivals at A already
-  exclude riders who were turned away. Measuring failures directly would need
-  minute-by-minute station counts, which are not published.
+  estimated by replaying the recorded trips against a starting inventory. The
+  counts are a likely undercount, not a lower bound: most missing riders were
+  turned away, which hides failures, but a missing rider can also hide a
+  success that would have prevented one (an unrecorded pickup frees a dock for
+  a recorded return). Failures avoided, the gap between the baseline and a plan,
+  is an estimate that could be too high or too low. Measuring failures directly
+  would need minute-by-minute station counts, which are not published.
 - **No historical inventory:** bikes per station over time are not published,
   so the overnight starting level is estimated.
 - **Stations modelled independently** in the morning replay: a failed pickup at
-  A does not cancel the matching return at B.
+  A does not cancel the matching return at B. Keeping that return is fairly
+  realistic, because a rider who finds A empty often takes a bike from a
+  nearby station and still rides to B. The part not modelled is that extra
+  pickup at the neighbouring station, which takes a bike it would otherwise
+  have kept. Likewise, a rider turned away from a full dock leaves the bike at a
+  neighbour, and that extra return is not added there.
 - **Daytime rebalancing is not modelled.** The real operator also moves bikes
-  during the day, so "no rebalancing" is a reference point, not the actual
-  2025 operation. Absolute failure counts are not a forecast of what riders
-  experienced.
+  during the day, and often: over 24 hours the swing exceeds dock capacity on
+  20.7% of station-days (see [Assumptions](#assumptions)). So "no rebalancing"
+  is a reference point, not the actual 2025 operation. Absolute failure counts
+  are not a forecast of what riders experienced.
 - **Season drift.** Plans learned on May–Aug lose a little accuracy on Sep–Oct,
   which shows up once more than about 100 bikes are moved.
 - **Whole-night routing is a heuristic.** Each tour is routed optimally, but
@@ -412,8 +454,12 @@ sample with both solvers. HiGHS and Gurobi reached the same optimal objective on
 expected failures, the solvers may pick different ones, so per-morning results can
 differ by a fraction of a failure.
 
-The first run downloads about 230 MB. The full pipeline takes about 8 minutes,
+The first run downloads about 230 MB. The full pipeline takes about 9 minutes,
 most of it the wide-network evaluation.
+
+[src/status_snapshot.py](src/status_snapshot.py) is not part of the pipeline.
+It saves one live GBFS station_status snapshot, used only to check the
+usable-capacity assumption, and each run gives a new one.
 
 ## Repository layout
 
