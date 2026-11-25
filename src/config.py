@@ -44,3 +44,5 @@ VAN_CAPACITIES = [10, 20, 30]   # ASSUMPTION: no public figure; reported as scen
 VAN_CAPACITY = 20               # ASSUMPTION: central case
 MOVE_BUDGET = None              # bikes handled per night; swept as a scenario, not fixed
 ROAD_CIRCUITY = 1.3             # ASSUMPTION: road distance / straight-line distance
+CAPACITY_BUFFER = 0             # ASSUMPTION: docks per station treated as unusable (disabled bike
+                                # or dock), floored at 0 usable; 1 and 2 run in sensitivity.py

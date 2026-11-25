@@ -1,0 +1,38 @@
+station_id,name,capacity,share_am,share_day,share_6am_6am
+7076,York St / Queens Quay W,57,0.0,0.087,0.087
+7017,Widmer St / Adelaide St W,11,0.039,0.598,0.559
+7432,Frederick St / King St E,47,0.0,0.016,0.016
+7720,King St W / Portland St,31,0.0,0.134,0.15
+7542,Queen St W / John St,23,0.008,0.236,0.22
+7078,College St / Major St,15,0.008,0.362,0.37
+7006,Bay St / College St (East Side),31,0.0,0.008,0.016
+7016,Bay St / Queens Quay W (Ferry Terminal),35,0.024,0.118,0.197
+7324,King St W / Charlotte St,23,0.0,0.094,0.126
+7102,Nelson St / Duncan St,31,0.0,0.394,0.433
+7000,Fort York  Blvd / Capreol Ct,47,0.024,0.276,0.323
+7253,John St  / Mercer St - SMART,12,0.047,0.283,0.339
+7462,Richmond St E / Yonge St,17,0.008,0.197,0.126
+7217,Soho St / Queen St W,15,0.0,0.465,0.417
+7260,Spadina Ave / Adelaide St W,15,0.008,0.11,0.126
+7033,Union Station,43,0.008,0.11,0.055
+7038,Dundas St W / Yonge St,31,0.0,0.055,0.055
+7418,College Park - Yonge St Entrance,25,0.0,0.008,0.008
+7100,Dundas St E / Regent Park Blvd,27,0.0,0.512,0.583
+7682,Bathurst St / Front St W,35,0.0,0.126,0.236
+7816,Bay St / Dundas St W,55,0.0,0.016,0.016
+7007,College St / Huron St,19,0.024,0.134,0.094
+7168,Queens Quay / Yonge St,47,0.0,0.055,0.087
+7246,Yonge St / Bloor St,19,0.0,0.031,0.031
+7002,St. George St / Bloor St W,19,0.087,0.205,0.189
+8014,Wellington St W / Blue Jays Way,23,0.0,0.031,0.055
+7030,Bay St / Wellesley St W,35,0.008,0.717,0.701
+7018,Bremner Blvd / Rees St,49,0.0,0.362,0.307
+7850,Maud St / Adelaide St W - SMART,16,0.008,0.142,0.142
+7123,420 Wellington St W,14,0.047,0.551,0.488
+7043,Queens Quay W / Lower Simcoe St,19,0.008,0.236,0.228
+7391,Yonge St / Dundas Sq,31,0.0,0.126,0.157
+7285,Spadina Ave / Harbord St - SMART,36,0.0,0.087,0.134
+7788,Queens Quay E / Lower Jarvis St,49,0.0,0.0,0.0
+7021,Bay St / Albert St,63,0.0,0.024,0.031
+7261,Queens Quay E / Lower Sherbourne St,26,0.0,0.024,0.047
+7001,Wellesley Station Green P,23,0.094,0.724,0.701

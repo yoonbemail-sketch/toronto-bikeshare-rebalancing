@@ -30,6 +30,7 @@ def main():
     rows = []
 
     st, _ = M.load_study()
+    st = M.usable(st)
     ev = M.load_events(st.index)
     days = M.working_days()
     train, test = days[days.month <= 8], days[days.month >= 9]

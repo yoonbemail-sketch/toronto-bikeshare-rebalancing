@@ -4,6 +4,7 @@ Outputs:
   outputs/figures/*.png                         charts used in the README
   outputs/tables/station_morning_profile.csv    per-station morning stats (Phase 3 input)
   outputs/tables/eda_summary.csv                headline numbers quoted in the README
+  outputs/tables/swing_vs_capacity.csv          morning vs 24h swing check, 37 modelled stations
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +12,7 @@ import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 
 import config
+import morning as M  # Phase 3 helpers: same events and station set as the model
 
 # --- Chart style (reference palette, light mode) -----------------------------
 SURFACE, INK, INK2, MUTED = "#fcfcfb", "#0b0b0b", "#52514e", "#898781"
@@ -299,6 +301,31 @@ def stability_and_feasibility(days, study):
     return st
 
 
+def swing_vs_capacity():
+    """At the 37 modelled stations, the share of working days on which the swing
+    exceeds dock capacity, in three windows:
+      am       6-10am, the window the overnight plan protects
+      day      the calendar day, 0-24h
+      6am_6am  6am the previous day to 6am, the window the no-rebalancing
+               baseline replays (rebalance.py)
+    A swing above capacity means the recorded trips could not all have happened
+    without bikes being moved during that window (daytime vans or valet)."""
+    st, _ = M.load_study("downtown")
+    ev = M.load_events(st.index)
+    days = M.working_days()
+    lo, _ = config.MORNING_WINDOW
+    share = st[["name", "capacity"]].assign(
+        share_am=M.swing_exceeds_capacity(ev, st, days),
+        share_day=M.swing_exceeds_capacity(ev, st, days, (0, 24)),
+        share_6am_6am=M.swing_exceeds_capacity(ev, st, days, (lo - 24, lo)))
+    share.round(3).to_csv(config.TABLES / "swing_vs_capacity.csv")
+    # Every station has the same days, so the mean over stations is the station-day share
+    summary["am_station_mornings_fit_37"] = round(1 - share.share_am.mean(), 3)
+    summary["day_station_days_swing_gt_cap_37"] = round(share.share_day.mean(), 3)
+    summary["day_stations_gt_cap_over_10pct"] = int((share.share_day > 0.1).sum())
+    summary["6am_6am_station_days_swing_gt_cap_37"] = round(share.share_6am_6am.mean(), 3)
+
+
 def main():
     print("Loading")
     t, stations, study = load()
@@ -315,6 +342,7 @@ def main():
     st = stability_and_feasibility(days, study)
     st["am_net_avg"], st["pm_net_avg"] = am, pm
     st.round(2).to_csv(config.TABLES / "station_morning_profile.csv")
+    swing_vs_capacity()
     pd.Series(summary).to_csv(config.TABLES / "eda_summary.csv", header=["value"])
     for k, v in summary.items():
         print(f"  {k}: {v}")

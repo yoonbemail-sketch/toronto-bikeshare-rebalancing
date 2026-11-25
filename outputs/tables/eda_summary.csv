@@ -16,3 +16,7 @@ corr_am_pm,-0.95
 n_reverse,22.0
 stations_unfixable_majority,3.0
 stations_unfixable_any10,3.0
+am_station_mornings_fit_37,0.988
+day_station_days_swing_gt_cap_37,0.207
+day_stations_gt_cap_over_10pct,23.0
+6am_6am_station_days_swing_gt_cap_37,0.212
