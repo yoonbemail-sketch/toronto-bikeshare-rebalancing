@@ -18,6 +18,8 @@ How much better is that than doing nothing, or than a simple rule of thumb?
 | 2 EDA | `src/eda.py` | charts in `outputs/figures/`, findings in README |
 | 3a Overnight plan + evaluation | `src/morning.py`, `src/rebalance.py` | target inventory per station, failures on held-out days |
 | 3b Van route | `src/routing.py` | stop sequence and load for one cluster |
+| 3c Whole-night routing | `src/multivan.py` | balanced van tours for the full plan |
+| 3d Wider network | `src/rebalance.py wide`, `src/multivan.py wide` | same models on the 145 busiest stations |
 
 `run_all.sh` runs the pipeline end to end.
 

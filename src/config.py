@@ -26,6 +26,7 @@ TRIP_YEAR = 2025               # most recent full year on the portal (checked 20
 
 # --- Study scope -------------------------------------------------------------
 N_STATIONS = 40                 # busiest downtown stations; sized for the Gurobi license
+WIDE_N = 150                    # "wide" scope: busiest stations system-wide (~51% of trip ends)
 # Downtown = 13 City neighbourhoods approximating the Downtown Plan area (list in clean.py)
 SEASON_MONTHS = range(5, 11)    # May-October, working days only
 # Ontario statutory holidays in the season: treated like weekends, not working days
@@ -37,6 +38,8 @@ MORNING_WINDOW = (6, 10)        # [start, end) hour of the weekday morning peak 
 DEPOT_ADDRESS = "25 Booth Ave, Toronto"  # operator depot, per McNee & Miller (2023)
 DEPOT_LATLON = (43.6543954, -79.3410455)  # OpenStreetMap Nominatim geocode, Nov 2026
 ROUTE_STATIONS = 12             # stations in the routed cluster (license-sized)
+MAX_TOUR_STOPS = 12             # multi-van: most stations in one tour (keeps each route MIP fast)
+DRIVE_KMH = 30                  # ASSUMPTION: van speed, as in McNee & Miller (2023); handling time excluded
 VAN_CAPACITIES = [10, 20, 30]   # ASSUMPTION: no public figure; reported as scenarios
 VAN_CAPACITY = 20               # ASSUMPTION: central case
 MOVE_BUDGET = None              # bikes handled per night; swept as a scenario, not fixed

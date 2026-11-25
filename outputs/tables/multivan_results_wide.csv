@@ -1,0 +1,5 @@
+clustering,tours,total_km,longest_tour_km,drive_hours,pickups_drops,not_done,share_done,max_gap,solve_seconds
+Balanced assignment,9,168.653,23.791,5.622,600,0,1.0,0.0,13.043
+Balanced assignment,10,178.705,25.032,5.957,600,0,1.0,0.0,13.271
+Balanced assignment,11,184.909,22.861,6.164,600,0,1.0,0.0,10.843
+Balanced assignment,12,194.692,23.545,6.49,600,0,1.0,0.0,8.98

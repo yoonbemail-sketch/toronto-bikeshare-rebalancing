@@ -14,12 +14,46 @@ import pandas as pd
 import config
 
 
-def load_study():
-    """The study stations that overnight repositioning can help (see Phase 2)."""
-    prof = pd.read_csv(config.TABLES / "station_morning_profile.csv", index_col="station_id")
-    valet = prof.share_swing_gt_cap > 0.5  # swing > capacity on most mornings
-    stations = pd.read_csv(config.PROCESSED / "study_stations.csv", index_col="station_id")
-    return stations[~stations.index.isin(prof.index[valet])], stations[stations.index.isin(prof.index[valet])]
+ISLANDS_BOX = (43.635, -79.40, -79.34)  # same rule as clean.py: ferry-only stations
+
+
+def candidates(scope):
+    """Station set before the valet filter.
+    downtown: the 40 busiest downtown stations chosen in Phase 1.
+    wide:     the WIDE_N busiest stations system-wide (May-Oct working days),
+              excluding Toronto Islands and stations with no 2025 history."""
+    if scope == "downtown":
+        return pd.read_csv(config.PROCESSED / "study_stations.csv", index_col="station_id")
+    if scope == "wide":
+        s = pd.read_csv(config.PROCESSED / "stations.csv", index_col="station_id")
+        lat_max, lon_min, lon_max = ISLANDS_BOX
+        island = (s.lat < lat_max) & s.lon.between(lon_min, lon_max)
+        s = s[~island & (s.capacity > 0) & (s.trips_season_wkday > 0)]
+        return s.nlargest(config.WIDE_N, "trips_season_wkday")
+    raise SystemExit(f"Unknown scope {scope!r}; use 'downtown' or 'wide'")
+
+
+def swing_exceeds_capacity(ev, stations, days):
+    """Share of mornings on which a station's swing (highest minus lowest point of
+    its running bike count) exceeds its capacity: no 6am level could avoid a failure."""
+    share = {}
+    mornings = [morning(ev, d) for d in days]
+    for sid, row in stations.iterrows():
+        hits = 0
+        for m in mornings:
+            cum = np.cumsum(np.r_[0, m.get(sid, [])])
+            hits += (cum.max() - cum.min()) > row.capacity
+        share[sid] = hits / len(days)
+    return pd.Series(share)
+
+
+def load_study(scope="downtown"):
+    """Stations overnight repositioning can help: candidates minus valet-type
+    stations (swing > capacity on most mornings; see README, Phase 2 finding 6)."""
+    cand = candidates(scope)
+    share = swing_exceeds_capacity(load_events(cand.index), cand, working_days())
+    valet = share > 0.5
+    return cand[~valet.reindex(cand.index).values], cand[valet.reindex(cand.index).values]
 
 
 def load_events(station_ids):

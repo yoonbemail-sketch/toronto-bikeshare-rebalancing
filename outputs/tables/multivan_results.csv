@@ -1,0 +1,8 @@
+clustering,tours,total_km,longest_tour_km,drive_hours,pickups_drops,not_done,share_done,max_gap,solve_seconds
+Balanced assignment,2,36.737,20.132,1.225,150,0,1.0,0.0,3.186
+Sweep (angle only),3,44.531,18.237,1.484,150,59,0.607,0.0,1.295
+Balanced assignment,3,45.787,18.181,1.526,150,0,1.0,0.0,2.322
+Sweep (angle only),4,58.832,17.462,1.961,150,30,0.8,0.0,0.506
+Balanced assignment,4,54.264,15.621,1.809,150,0,1.0,0.0,1.509
+Sweep (angle only),5,69.69,17.921,2.323,150,30,0.8,0.0,0.183
+Balanced assignment,5,65.157,14.251,2.172,150,0,1.0,0.0,0.143

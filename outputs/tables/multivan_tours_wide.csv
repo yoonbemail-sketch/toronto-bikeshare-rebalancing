@@ -1,0 +1,106 @@
+tour,stop,station,bikes,tour_km
+1,1,Isabella St / Church St,19,21.78
+1,2,Yonge St / Bloor St,-8,21.78
+1,3,Church St / Bloor St E,-5,21.78
+1,4,Bloor St E / Huntley St - SMART,-5,21.78
+1,5,Sherbourne St / Isabella St,4,21.78
+1,6,Sherbourne St / Wellesley St E,12,21.78
+1,7,Tommy Thompson Park (Leslie Street Spit),-7,21.78
+1,8,Sherbourne St / Carlton St (Allan Gardens),6,21.78
+1,9,Dundas St E / Parliament St,1,21.78
+2,1,Bay St / Wellesley St W (visit 2),3,23.79
+2,2,Charles St W / Balmuto St - SMART (visit 2),1,23.79
+2,3,Bay St / Charles St W - SMART,10,23.79
+2,4,St. George St / Bloor St W,-3,23.79
+2,5,Queen's Park / Bloor St W,-4,23.79
+2,6,Bay St / Bloor St W (East Side),-8,23.79
+2,7,Charles St W / Balmuto St - SMART (visit 1),20,23.79
+2,8,King St E / Berkeley St (visit 1),-20,23.79
+2,9,Wellesley Station Green P,18,23.79
+2,10,King St E / Berkeley St (visit 2),-6,23.79
+2,11,Church St  / Wood St (visit 2),3,23.79
+2,12,Church St / Alexander St (visit 2),5,23.79
+3,1,Jarvis St / Carlton St,11,15.55
+3,2,Granby St / Church St - SMART,8,15.55
+3,3,McGill St / Church St,-1,15.55
+3,4,Jarvis St / Richmond St E,-4,15.55
+3,5,Scott St / The Esplanade,-12,15.55
+3,6,College Park - Yonge St Entrance,-2,15.55
+3,7,Church St  / Wood St (visit 1),20,15.55
+3,8,Gould St / Yonge St (TMU),-8,15.55
+3,9,College Park - Gerrard Entrance,-5,15.55
+3,10,College Park South,-6,15.55
+3,11,Yonge St / Alexander St - SMART,-1,15.55
+3,12,Church St / Alexander St (visit 1),20,15.55
+4,1,Toronto Eaton Centre (Yonge St) - SMART,-2,20.39
+4,2,Edward St / Yonge St,-8,20.39
+4,3,Bay St / Dundas St W,-1,20.39
+4,4,Armoury St / Chestnut St,-6,20.39
+4,5,Robert St / Bloor St W - SMART,6,20.39
+4,6,Bloor St W / Manning Ave - SMART,12,20.39
+4,7,Dundas St W / St. Patrick St,-4,20.39
+4,8,St. George St / Willcocks St,3,20.39
+4,9,University Ave / College St (East),-6,20.39
+4,10,Bay St / College St (West Side) - SMART,-3,20.39
+4,11,Bay St / College St (East Side),-9,20.39
+4,12,Bay St / Wellesley St W (visit 1),20,20.39
+5,1,Baldwin St / Henry St,2,23.46
+5,2,Baldwin St / Spadina Ave - SMART,3,23.46
+5,3,Nassau St / Bellevue Ave,-8,23.46
+5,4,College St / Markham St,3,23.46
+5,5,Bloor St W / Shaw St - SMART,16,23.46
+5,6,Hanna Ave / Liberty St,-7,23.46
+5,7,Queen St W / Shaw St,-8,23.46
+5,8,College St / Crawford St,2,23.46
+5,9,80 Clinton St,5,23.46
+5,10,Palmerston Ave / Dundas St W,1,23.46
+5,11,Spadina Ave / Dundas St W - SMART,3,23.46
+5,12,Spadina Ave / Sullivan St,2,23.46
+6,1,Bond St / Queen St E,-1,12.65
+6,2,Church St / Shuter St,3,12.65
+6,3,Richmond St E / Yonge St,-7,12.65
+6,4,Adelaide St W / Yonge St,-3,12.65
+6,5,Wellington St W / Bay St,-6,12.65
+6,6,Nelson St / Duncan St,4,12.65
+6,7,Queen St W / John St,2,12.65
+6,8,Widmer St / King St W,5,12.65
+6,9,John St  / Mercer St - SMART,2,12.65
+6,10,Simcoe St / Wellington St W South,-3,12.65
+6,11,Union Station,-13,12.65
+6,12,King St E / Victoria St,-1,12.65
+7,1,420 Wellington St W,-4,15.72
+7,2,King St W / Brant St,1,15.72
+7,3,King St W / Portland St,-5,15.72
+7,4,King St W / Tecumseth St,-2,15.72
+7,5,Bathurst St / Adelaide St W,-1,15.72
+7,6,Richmond St W / Bathurst St,-3,15.72
+7,7,Portland St / Queen St W,5,15.72
+7,8,St. Andrew's Playground Park,2,15.72
+7,9,Maud St / Adelaide St W - SMART,-3,15.72
+7,10,Spadina Ave / Adelaide St W,2,15.72
+7,11,The Well,-3,15.72
+7,12,HTO Park (Queens Quay W),-8,15.72
+8,1,Queens Quay W / Dan Leckie Way,-7,20.48
+8,2,Housey St / Dan Leckie Way,1,20.48
+8,3,Portland St / Wellington St W,2,20.48
+8,4,Bathurst St / Front St W,1,20.48
+8,5,Ordnance Park,-1,20.48
+8,6,Dundas St W / Crawford St,7,20.48
+8,7,Lynn Williams St / East Liberty St,-2,20.48
+8,8,East Liberty St / Western Battery Rd,1,20.48
+8,9,Strachan Ave / East Liberty St - SMART,-2,20.48
+8,10,Coronation Park (Martin Goodman Trail),-6,20.48
+8,11,Bathurst St/Queens Quay(Billy Bishop Airport),-9,20.48
+8,12,Spadina Ave / Blue Jays Way,-1,20.48
+9,1,Lower Sherbourne St / The Esplanade,-1,14.85
+9,2,Queens Quay / Yonge St,-3,14.85
+9,3,York St / Queens Quay W,-11,14.85
+9,4,Queens Quay W / Lower Simcoe St,1,14.85
+9,5,Bremner Blvd / Rees St,-4,14.85
+9,6,Clarence Square,7,14.85
+9,7,King St W / Charlotte St,11,14.85
+9,8,Front St W / University Ave (2),-5,14.85
+9,9,York St / Lake Shore Blvd W,-7,14.85
+9,10,Church St / Lombard St,4,14.85
+9,11,Queens Quay E / Freeland St,-10,14.85
+9,12,Lower Jarvis St / Queens Quay E,-1,14.85

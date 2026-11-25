@@ -1,0 +1,9 @@
+,value
+headline_budget,300.0
+base_failures,249.7906976744186
+opt_failures,81.16279069767442
+rule_failures,314.5348837209302
+opt_moved,300.0
+rule_moved,295.72093023255815
+best_unlimited_failures,71.79069767441861
+unlimited_moved,500.7906976744186

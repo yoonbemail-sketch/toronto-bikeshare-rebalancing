@@ -24,7 +24,9 @@ import morning as M
 import solver as S
 from eda import BLUE, ORANGE, INK2, MUTED, SURFACE, AXIS, save  # shared chart style
 
-BUDGETS = [0, 25, 50, 75, 100, 150, 200, 300, 400, None]  # bikes moved per night; None = no limit
+# Bikes moved per night to test, per scope; None = no limit
+BUDGETS = {"downtown": [0, 25, 50, 75, 100, 150, 200, 300, 400, None],
+           "wide": [0, 50, 100, 200, 300, 400, 600, 800, 1000, None]}
 MOVE_COST = 1e-3  # tiny cost per bike moved: never move a bike for zero benefit
 
 
@@ -73,16 +75,17 @@ def rule_fill_half(st, b, budget):
     return y
 
 
-def morning_failures(st, events, y):
+def morning_failures(st, events, y, subset=None):
     fp = fr = 0
-    for sid in st.index:
+    for sid in (st.index if subset is None else st.index.intersection(subset)):
         a, b_, _ = M.replay(events.get(sid, []), st.capacity[sid], int(y[sid]))
         fp, fr = fp + int(a), fr + int(b_)
     return fp, fr
 
 
 # --- Evaluation --------------------------------------------------------------
-def evaluate(st, ev, g, test_days):
+def evaluate(st, ev, g, test_days, budgets, subset=None):
+    """subset: also count failures at these stations only (downtown 37 in the wide run)."""
     rows, plans, sizes = [], {}, set()
     for day in test_days:
         b = M.overnight_inventory(ev, st, day)
@@ -90,8 +93,9 @@ def evaluate(st, ev, g, test_days):
         n_events = sum(len(events.get(s, [])) for s in st.index)
         fp, fr = morning_failures(st, events, b)
         rows.append(dict(day=day, policy="No rebalancing", budget=0, moved=0,
-                         fail_pick=fp, fail_ret=fr, events=n_events))
-        for budget in BUDGETS[1:]:
+                         fail_pick=fp, fail_ret=fr, events=n_events,
+                         fail_subset=sum(morning_failures(st, events, b, subset)) if subset is not None else np.nan))
+        for budget in budgets[1:]:
             for policy in ("Fill to 50% rule", "Optimised"):
                 if policy == "Optimised":
                     y, size, _ = solve_plan(st, g, b, budget)
@@ -101,7 +105,9 @@ def evaluate(st, ev, g, test_days):
                 fp, fr = morning_failures(st, events, y)
                 moved = int((b - y).clip(lower=0).sum())
                 rows.append(dict(day=day, policy=policy, budget=budget, moved=moved,
-                                 fail_pick=fp, fail_ret=fr, events=n_events))
+                                 fail_pick=fp, fail_ret=fr, events=n_events,
+                                 fail_subset=(sum(morning_failures(st, events, y, subset))
+                                              if subset is not None else np.nan)))
                 plans[(day, policy, budget)] = (b, y)
     df = pd.DataFrame(rows)
     df["budget"] = df.budget.astype("object").where(df.budget.notna(), "no limit")
@@ -113,7 +119,7 @@ def summarise(df):
     s = (df.groupby(["policy", "budget"], sort=False)
          .agg(moved=("moved", "mean"), fail_pick=("fail_pick", "mean"),
               fail_ret=("fail_ret", "mean"), failures=("failures", "mean"),
-              events=("events", "mean")).reset_index())
+              events=("events", "mean"), fail_subset=("fail_subset", "mean")).reset_index())
     s["failure_rate"] = s.failures / s.events
     for qcap in config.VAN_CAPACITIES:
         s[f"van_loads_Q{qcap}"] = np.ceil(s.moved / qcap)
@@ -121,7 +127,7 @@ def summarise(df):
 
 
 # --- Charts ------------------------------------------------------------------
-def plot_budget_curve(s):
+def plot_budget_curve(s, n_stations, fname):
     base = s[s.policy == "No rebalancing"].failures.iat[0]
     fig, ax = plt.subplots(figsize=(8, 4.6))
     ax.axhline(base, color=MUTED, lw=1.5, ls="--")
@@ -138,9 +144,9 @@ def plot_budget_curve(s):
     ax.set_xlim(0, s.moved.max() * 1.25)
     ax.set(xlabel="Bikes moved overnight (average per night)",
            ylabel="Failed pickups + returns, 6–10am")
-    ax.set_title("Morning failures vs overnight effort, 37 stations\n"
+    ax.set_title(f"Morning failures vs overnight effort, {n_stations} stations\n"
                  "Held-out Sep–Oct 2025 working days (43 mornings)")
-    save(fig, "budget_curve.png")
+    save(fig, fname)
 
 
 def plot_plan(st, b, y_opt, y_rule, title):
@@ -167,8 +173,9 @@ def plot_plan(st, b, y_opt, y_rule, title):
     save(fig, "plan_example.png")
 
 
-def main():
-    st, valet = M.load_study()
+def main(scope):
+    sfx = "" if scope == "downtown" else f"_{scope}"  # output file suffix
+    st, valet = M.load_study(scope)
     print(f"{len(st)} stations; excluded as valet-type: {', '.join(valet.name)}")
     ev = M.load_events(st.index)
     days = M.working_days()
@@ -176,11 +183,12 @@ def main():
     print(f"train {len(train)} mornings (May-Aug), test {len(test)} mornings (Sep-Oct)")
     g = M.failure_curves(ev, st, train)
 
-    df, plans, sizes = evaluate(st, ev, g, test)
+    subset = M.load_study("downtown")[0].index if scope != "downtown" else None
+    df, plans, sizes = evaluate(st, ev, g, test, BUDGETS[scope], subset)
     print(f"solver {S.SOLVER}; model size (vars, constraints): {sorted(sizes)}")
     s = summarise(df)
-    df.to_csv(config.TABLES / "rebalancing_by_night.csv", index=False)
-    s.round(3).to_csv(config.TABLES / "rebalancing_results.csv", index=False)
+    df.to_csv(config.TABLES / f"rebalancing_by_night{sfx}.csv", index=False)
+    s.round(3).to_csv(config.TABLES / f"rebalancing_results{sfx}.csv", index=False)
     print(s[["policy", "budget", "moved", "fail_pick", "fail_ret", "failures",
              "failure_rate"]].round(2).to_string(index=False))
 
@@ -199,9 +207,9 @@ def main():
                "opt_moved": head.moved, "rule_moved": rule.moved,
                "best_unlimited_failures": best,
                "unlimited_moved": opt.moved.iat[-1]}).to_csv(
-        config.TABLES / "rebalancing_headline.csv", header=["value"])
+        config.TABLES / f"rebalancing_headline{sfx}.csv", header=["value"])
 
-    plot_budget_curve(s)
+    plot_budget_curve(s, len(st), f"budget_curve{sfx}.png")
 
     # Example night: the test night with the median no-rebalancing failures
     nb = df[df.policy == "No rebalancing"].sort_values("failures")
@@ -212,15 +220,17 @@ def main():
                          "b_6am_no_rebalancing": b, "y_optimised": y_opt, "y_rule": y_rule})
     plan["change"] = plan.y_optimised - plan.b_6am_no_rebalancing  # + drop off, - pick up
     plan.index.name = "station_id"
-    plan.to_csv(config.TABLES / "plan_example.csv")
+    plan.to_csv(config.TABLES / f"plan_example{sfx}.csv")
     row = df[(df.day == day)].set_index(["policy", "budget"]).failures
-    plot_plan(st, b, y_opt, y_rule,
-              f"Overnight plan for {day:%a %d %b %Y} (budget {head.budget:.0f} bikes)\n"
-              f"Failures that morning: none {row[('No rebalancing', 0)]}, "
-              f"rule {row[('Fill to 50% rule', head.budget)]}, "
-              f"optimised {row[('Optimised', head.budget)]}")
+    if scope == "downtown":  # one row per station: readable for 37, not for 145
+        plot_plan(st, b, y_opt, y_rule,
+                  f"Overnight plan for {day:%a %d %b %Y} (budget {head.budget:.0f} bikes)\n"
+                  f"Failures that morning: none {row[('No rebalancing', 0)]}, "
+                  f"rule {row[('Fill to 50% rule', head.budget)]}, "
+                  f"optimised {row[('Optimised', head.budget)]}")
     print(f"example night {day:%Y-%m-%d}: moved {int(plan.change.clip(lower=0).sum())} bikes")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv[1] if len(sys.argv) > 1 else "downtown")

@@ -33,6 +33,16 @@ downtown stations that overnight repositioning can help:
 - **Sequencing matters once the van is full.** For one example night, an
   optimised van route completes 125 of 126 planned pickups and drops in 24.9 km.
   A greedy "nearest useful station" route drives 20.2 km but leaves 36 undone.
+- **Widening the network helps.** On the 145 busiest stations (half of all
+  trip ends, a 4,062-variable model), failures fall from 249.8 to 72.0 per
+  morning (−71%) with 400 bikes moved. Downtown stations themselves also do
+  better than when optimised alone (best 27.2 → 24.6), because the core's
+  surplus bikes have somewhere useful to go.
+- **The whole night can be routed.** The downtown plan takes 2 van tours
+  (37 km). The wide plan takes 9 tours (169 km, about 5.6 hours of driving).
+  Every pickup and drop is done in both. Grouping stations so each tour's
+  pickups and drops balance is essential: grouping by direction alone leaves up
+  to 39% of moves undone.
 - Failure counts are lower bounds; see [Limitations](#limitations).
 
 ## Data
@@ -87,6 +97,9 @@ Each issue is handled in [src/clean.py](src/clean.py) and counted in
      to minimise expected morning failures, given a budget of bikes moved.
    - *Van routing (MIP):* for one cluster, the stop order and loads for a
      capacitated van.
+   - *Whole-night routing:* split the plan into balanced van tours, then
+     route each one.
+   - *Wider network:* the same model on the 145 busiest stations.
 4. **Evaluation:** replay held-out weekday mornings under three policies:
    no rebalancing, a fill-to-50% rule, and the optimised plan.
 
@@ -240,6 +253,74 @@ model has 336 variables and 326 constraints and solves to proven optimality.
 Stop list for the 20-bike van:
 [route_stops_Q20.csv](outputs/tables/route_stops_Q20.csv).
 
+### Wider network: the 145 busiest stations
+
+**Set-up.** The same model and evaluation, applied to the 150 busiest stations
+system-wide (51% of May–Oct working-day trip ends). The same rule removes 5
+valet-type stations, leaving 145: 117 downtown and 28 just outside it, mainly
+in Liberty Village, West Queen West and Little Italy. The model has 4,062 variables,
+about twice the free Gurobi licence's limit, and HiGHS solves each night in
+under a second. Run with `python src/rebalance.py wide`.
+
+![Budget curve, wide](outputs/figures/budget_curve_wide.png)
+
+| Bikes moved per night | 0 | 100 | 200 | 300 | 400 | no limit (501) |
+|---|---|---|---|---|---|---|
+| Optimised: failures per morning, all 145 | 249.8 | 153.2 | 104.0 | 81.2 | 72.0 | 71.9 |
+| Optimised: of which at the 37 downtown stations | 73.7 | 44.3 | 30.2 | 25.1 | 24.6 | 25.1 |
+| 50% rule: failures per morning, all 145 | 249.8 | 259.2 | 278.5 | 314.5 | 340.4 | 345.6 |
+
+- **The same pattern at four times the scale.** The plan beats no rebalancing
+  on all 43 test mornings. The 50% rule is again worse than doing nothing, and
+  more so the more bikes it moves.
+- **Downtown benefits from a wider network.** Optimised alone, the 37 downtown
+  stations bottom out at 27.2 failures per morning, because bikes cleared from
+  the core have to fit into other downtown stations. In the wide model they
+  reach 24.6 (−10%), because residential stations just outside downtown need
+  those bikes for their own morning.
+- **Small budgets are spent where they help most,** which is not always
+  downtown. At 100 bikes, the downtown stations get less help than in the
+  downtown-only plan.
+
+Results: [rebalancing_results_wide.csv](outputs/tables/rebalancing_results_wide.csv).
+
+### Routing the whole night with several van tours
+
+**Method (cluster first, route second).**
+1. **Seeds:** sort the plan's stations by compass angle around the depot and
+   cut them into K wedges of equal work (the classic sweep heuristic). The
+   wedge centres become seeds.
+2. **Balanced assignment** (Fisher–Jaikumar style): a small MIP assigns each
+   station to a tour. It minimises distance to the tour's seed, subject to
+   each tour's net bikes (drops minus pickups) being within one van load, so
+   the tour can start and end at the depot, and at most 12 stops per tour.
+3. **Routing:** each tour is routed with the single-van MIP above.
+
+A station needing more than one van load (for example +23 bikes) is visited
+twice. One van can run several tours in a shift. Script:
+[src/multivan.py](src/multivan.py).
+
+![Multi-van downtown](outputs/figures/multivan_map.png)
+
+| Plan | Tours | Total km | Longest tour | Driving time at 30 km/h | Pickups/drops done |
+|---|---|---|---|---|---|
+| Downtown (75 bikes, 24 stops) | 2 | 36.7 | 20.1 km | 1.2 h | 150 of 150 |
+| Wide (300 bikes, 105 stops) | 9 | 168.7 | 23.8 km | 5.6 h | 600 of 600 |
+
+**Balance matters more than geography.** Grouping downtown stations by angle
+alone leaves 59 of 150 moves undone with 3 tours, and 30 with 4–5 tours. A wedge
+that is mostly pickups fills the van after 20 bikes. With balanced assignment,
+every tour count completes the plan, so the fewest tours is also the shortest
+total distance. On the wide plan, angle-only wedges cannot even stay within
+12 stops.
+
+![Multi-van wide](outputs/figures/multivan_map_wide.png)
+
+Stop lists: [multivan_tours.csv](outputs/tables/multivan_tours.csv),
+[multivan_tours_wide.csv](outputs/tables/multivan_tours_wide.csv). All
+tour counts: [multivan_results.csv](outputs/tables/multivan_results.csv),
+[multivan_results_wide.csv](outputs/tables/multivan_results_wide.csv).
+
 ### What an operator could take from this
 
 1. **Set station-specific targets from history, not a uniform fill level.**
@@ -252,6 +333,11 @@ Stop list for the 20-bike van:
    overnight plan can fix.
 4. **Route with van capacity in mind.** A good plan carried out by a
    capacity-blind route loses about 30% of its moves.
+5. **Plan across neighbourhood boundaries.** Downtown and the residential ring
+   around it swap bikes every morning. Planning them together helps both.
+6. **Build tours that balance pickups and drops,** not just tours that are
+   close together. A full night across the 145 busiest stations is about nine
+   20-bike van tours and roughly 5–6 hours of driving, plus handling time.
 
 ## Assumptions
 
@@ -270,6 +356,9 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 | Train / test split | Plans learn from May–Aug mornings and are scored on Sep–Oct mornings | Mirrors planning from past weeks |
 | Bike conservation | The overnight plan only moves bikes between the 37 stations | No bikes added to or removed from the group |
 | Depot stock | In the routing model the van may leave the depot loaded and bring bikes back | The routed 12-station subset is not balanced on its own |
+| Wide scope | 150 busiest stations system-wide, minus islands, stations with no 2025 history and valet-type stations (145 left) | Covers half of all trip ends; same rules as the downtown set |
+| Tours | At most 12 stops per tour; a station needing more than one van load is visited twice; one van can run several tours | Keeps each route model quick; matches how a dispatcher would split work |
+| Van speed | 30 km/h, driving only | As assumed in McNee & Miller (2023); handling time is not published |
 | Unfinished-move penalty | 5 km-equivalent per pickup or drop not done | Makes completing the plan the priority; distance breaks ties |
 | Scope | Overnight rebalancing only | The real operation runs 24/7; stations overnight moves cannot fix are flagged for daytime/valet service |
 
@@ -293,9 +382,11 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
   experienced.
 - **Season drift.** Plans learned on May–Aug lose a little accuracy on Sep–Oct,
   which shows up once more than about 100 bikes are moved.
-- **Routing covers one van and one 12-station cluster,** sized to fit Gurobi's
-  free licence too. HiGHS has no size cap, so routing a full night with several
-  vans is the natural next step.
+- **Whole-night routing is a heuristic.** Each tour is routed optimally, but
+  the split into tours (sweep seeds plus balanced assignment) is not proven
+  optimal, and neither is the total distance.
+- **Tour times are driving only** (30 km/h). Loading and unloading time is not
+  published, so real tours take longer.
 - **Distances** are straight-line × 1.3, not road-network shortest paths.
 
 ## How to run
@@ -321,7 +412,8 @@ sample with both solvers. HiGHS and Gurobi reached the same optimal objective on
 expected failures, the solvers may pick different ones, so per-morning results can
 differ by a fraction of a failure.
 
-The first run downloads about 230 MB and takes a few minutes.
+The first run downloads about 230 MB. The full pipeline takes about 8 minutes,
+most of it the wide-network evaluation.
 
 ## Repository layout
 
