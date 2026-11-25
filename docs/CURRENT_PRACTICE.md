@@ -59,8 +59,31 @@ observed, and an optimised plan with perfect foresight.
   and Broadview subway stations. Stations near the **core** tended to fill up.
 - They inferred historical inventory from **per-minute GBFS snapshots** they
   collected themselves from January 2021 to July 2022. That archive is not
-  published, which confirms that this project has to estimate overnight
-  inventory.
+  published. (Phase 4 later found a separate community archive that covers
+  2025; see below.)
+
+## What the 2025 station counts show (Phase 4)
+
+A community archive of the live station-status feed, with snapshots about every
+16 minutes, makes the 2025 operation measurable. A change in a station's count
+of 3 or more bikes that trips don't explain is counted as an operator move. At
+the 37 modelled downtown stations, on May–Oct 2025 working days:
+
+- **Bikes are moved around the clock**, not only overnight: about 144 added and
+  156 removed per day, including about 6 each way per hour during the morning
+  peak.
+- **Overnight** (9pm–6am, 43 Sep–Oct test nights), the operator dropped about
+  29 bikes a night at these stations, mostly in one or two drops of 10 or more,
+  and picked up about 7. Net, about 18 bikes a night came from outside the group.
+- **The three valet-type stations** lost about 495 bikes a day without a trip,
+  470 of them between 6 and 11am, and gained about 238, mostly between 3 and 8pm.
+  That matches staffed valet clearing.
+- Scored like any other policy, the operator's overnight result cut replayed
+  morning failures from 60.3 (no overnight moves) to 37.9. The optimised plan at
+  the same effort reaches 37.3, and at 50 bikes 29.7 (README, Phase 4).
+
+The decisions (where, how many, when) are now visible in data. Van routes,
+van capacity and crew numbers still are not.
 
 ## What this means for this project
 
@@ -73,10 +96,9 @@ observed, and an optimised plan with perfect foresight.
    for Q = 10, 20 and 30 bikes, so the conclusions do not depend on a number
    nobody has published.
 3. **Depot = 25 Booth Ave**, as in [2].
-4. **Baselines.** The real "as-is" plan cannot be reconstructed without
-   inventory history. We therefore compare against no rebalancing and a simple
-   rule, as planned, and use the paper's findings as an external check on
-   magnitudes.
+4. **Baselines.** Phase 3 had no inventory history, so it compared against no
+   rebalancing and a simple rule. Phase 4 found an archive of 2025 station
+   counts and adds the operator's actual practice as a baseline.
 
 ## Sources
 

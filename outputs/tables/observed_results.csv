@@ -1,0 +1,12 @@
+policy,budget,moved,fail_pick,fail_ret,failures,mornings_better_than_actual
+No overnight moves,0,0.0,39.814,20.465,60.279,1
+Actual 2025 operation,operator,31.14,22.07,15.86,37.93,0
+Fill to 50% rule,25,25.0,43.488,22.884,66.372,0
+Optimised,25,25.0,23.698,15.395,39.093,19
+Fill to 50% rule,50,50.0,48.558,25.256,73.814,2
+Optimised,50,50.0,15.326,14.419,29.744,33
+Fill to 50% rule,75,74.651,52.814,30.721,83.535,2
+Optimised,75,75.0,13.209,15.628,28.837,33
+Fill to 50% rule,100,97.884,56.0,35.442,91.442,1
+Optimised,100,100.0,13.721,18.442,32.163,28
+"Optimised, operator's effort",operator,31.14,21.837,15.512,37.349,21

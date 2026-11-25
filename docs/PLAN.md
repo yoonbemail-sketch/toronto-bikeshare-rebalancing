@@ -20,6 +20,7 @@ How much better is that than doing nothing, or than a simple rule of thumb?
 | 3b Van route | `src/routing.py` | stop sequence and load for one cluster |
 | 3c Whole-night routing | `src/multivan.py` | balanced van tours for the full plan |
 | 3d Wider network | `src/rebalance.py wide`, `src/multivan.py wide` | same models on the 145 busiest stations |
+| 4 Check against observed counts | `src/snapshots.py`, `src/observed.py` | replay validated against 2025 station counts; policies, including the operator's actual practice, scored from observed starting states |
 
 `run_all.sh` runs the pipeline end to end.
 
@@ -70,6 +71,9 @@ Each question feeds a later decision.
 - **Limitation 2: no inventory history.** The open data has no historical count
   of bikes per station, so the overnight starting inventory b_i must be
   estimated. Options are listed under "Decisions for review" below.
+  *Update (Phase 4):* an unofficial community archive of the live feed does
+  cover 2025, about every 16 minutes. Phase 4 uses it to validate the replay
+  and to start each policy from the observed state.
 - **Stations treated independently.** In the replay, a failed pickup at
   station i does not cancel the matching arrival at station j. This is a common
   simplification and is stated as such.

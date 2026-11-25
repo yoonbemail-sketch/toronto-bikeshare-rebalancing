@@ -46,3 +46,12 @@ MOVE_BUDGET = None              # bikes handled per night; swept as a scenario, 
 ROAD_CIRCUITY = 1.3             # ASSUMPTION: road distance / straight-line distance
 CAPACITY_BUFFER = 0             # ASSUMPTION: docks per station treated as unusable (disabled bike
                                 # or dock), floored at 0 usable; 1 and 2 run in sensitivity.py
+
+# --- Phase 4: observed station counts ------------------------------------------
+# Community archive of the live GBFS station_status feed (2025 rows from
+# github.com/MaxHalford/bike-sharing-history, about every 16 minutes)
+SNAPSHOTS_URL = ("https://github.com/ThatRandomUser23/toronto-bikeshare-data/releases/"
+                 "download/data-latest/toronto_bikeshare_snapshots.parquet")
+NIGHT_START = 21                # 9pm the evening before: start of the overnight window
+SNAPSHOT_MAX_AGE = 16           # minutes: a state is read from the nearest snapshot this close
+MOVE_THRESHOLD = 3              # bikes: an unexplained change this large counts as an operator move
