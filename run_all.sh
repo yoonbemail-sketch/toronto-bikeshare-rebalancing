@@ -14,4 +14,6 @@ $PY routing.py    # Phase 3b: van route for one cluster of the example plan
 $PY multivan.py downtown   # Phase 3c: whole downtown plan in balanced van tours
 $PY rebalance.py wide      # Phase 3d: same model on the 145 busiest stations
 $PY multivan.py wide       # Phase 3d: whole wide plan in van tours
+$PY snapshots.py  # Phase 4: observed station counts for 2025 (926 MB archive, downloaded once)
+$PY observed.py   # Phase 4: validate the replay; compare plans with what the operator did
 $PY solver_check.py  # HiGHS vs Gurobi on a sample (skipped if Gurobi is absent)

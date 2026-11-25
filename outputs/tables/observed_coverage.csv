@@ -1,0 +1,18 @@
+,value
+snapshot_times,14389
+median_gap_min,15.85
+longest_gap_start,2025-07-16 13:48:21
+longest_gap_hours,278.7527777777778
+usable_mornings_train,65
+working_days_train,84
+usable_mornings_test,43
+working_days_test,43
+intervals_exact_match,0.7670847789342585
+intervals,56205
+intervals_within_1,0.9619073036206743
+intervals_exact_match_shift-2min,0.6511342407259141
+intervals_exact_match_shift+2min,0.5334222933902678
+rows_with_unaccounted_docks,0.25682583976385054
+stations_docks_differ_from_2026,16
+docks_end_2025,1074
+docks_2026_feed,1114
