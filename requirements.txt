@@ -4,4 +4,6 @@ numpy>=2.5
 pyarrow>=26.0      # parquet for the cleaned trip table (millions of rows)
 matplotlib>=3.11
 requests>=2.34
-gurobipy>=14.0     # free restricted license: <= 2000 variables and <= 2000 constraints
+pulp>=4.3          # modelling layer: the same model code runs on either solver
+highspy>=1.16      # HiGHS: default solver, open source, no licence or size limit
+# Optional: gurobipy>=14.0  -> SOLVER=gurobi ./run_all.sh (free licence: <= 2000 vars/constraints)

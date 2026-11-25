@@ -7,7 +7,7 @@ station_id,name,capacity,lat,lon,b_6am_no_rebalancing,y_optimised,y_rule,change
 7078,College St / Major St,15,43.6576,-79.4032,12,9,8,-3
 7006,Bay St / College St (East Side),31,43.660439,-79.385525,18,9,18,-9
 7016,Bay St / Queens Quay W (Ferry Terminal),35,43.640978,-79.376785,2,2,14,0
-7324,King St W / Charlotte St,23,43.645572,-79.39399,2,11,8,9
+7324,King St W / Charlotte St,23,43.645572,-79.39399,2,12,8,10
 7102,Nelson St / Duncan St,31,43.648711,-79.389728,20,12,16,-8
 7000,Fort York  Blvd / Capreol Ct,47,43.63970679931218,-79.39614309573555,30,35,24,5
 7253,John St  / Mercer St - SMART,12,43.6461,-79.3895,2,3,2,1
@@ -24,7 +24,7 @@ station_id,name,capacity,lat,lon,b_6am_no_rebalancing,y_optimised,y_rule,change
 7168,Queens Quay / Yonge St,47,43.641646,-79.375308,14,14,19,0
 7246,Yonge St / Bloor St,19,43.669969,-79.386532,9,4,9,-5
 7002,St. George St / Bloor St W,19,43.66713121831853,-79.3995550638237,9,9,9,0
-8014,Wellington St W / Blue Jays Way,23,43.64473387070102,-79.39168963262681,3,9,7,6
+8014,Wellington St W / Blue Jays Way,23,43.64473387070102,-79.39168963262681,3,8,7,5
 7030,Bay St / Wellesley St W,35,43.664088,-79.387095,2,21,13,19
 7018,Bremner Blvd / Rees St,49,43.641529,-79.386741,8,8,16,0
 7850,Maud St / Adelaide St W - SMART,16,43.6460145694434,-79.39960497726345,12,12,11,0

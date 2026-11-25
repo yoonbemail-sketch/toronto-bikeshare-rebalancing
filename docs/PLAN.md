@@ -100,7 +100,7 @@ s.t.  Σ_y z_{i,y} = 1                        ∀ i     (one starting level per 
 
 Size: about Σ_i (C_i + 1) + 2|S| variables, roughly 1,000 to 1,700 for 40
 stations depending on dock counts, and about 2|S| + 2 constraints. This fits
-the 2,000-variable license limit. If the large downtown stations push it over,
+the 2,000-variable limit of Gurobi's free licence (HiGHS, the default solver, has no limit). If the large downtown stations push it over,
 the fallback is to group levels in steps of 2 bikes, or, if g_i is convex, to
 replace z with Gurobi's piecewise-linear objective (about 120 variables).
 

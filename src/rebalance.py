@@ -7,20 +7,21 @@ Test:  every Sep-Oct working day. For each test night:
   2. choose a plan with each policy under a budget of bikes moved,
   3. replay that real morning from the planned levels and count failures.
 
-Policies: no rebalancing | "fill to 50%" rule | optimised MIP (Gurobi).
+Policies: no rebalancing | "fill to 50%" rule | optimised MIP (HiGHS by default,
+Gurobi with SOLVER=gurobi; see solver.py).
 Outputs: outputs/tables/rebalancing_*.csv, outputs/figures/budget_curve.png,
          outputs/figures/plan_example.png
 """
 import math
 
-import gurobipy as gp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from gurobipy import GRB
+import pulp
 
 import config
 import morning as M
+import solver as S
 from eda import BLUE, ORANGE, INK2, MUTED, SURFACE, AXIS, save  # shared chart style
 
 BUDGETS = [0, 25, 50, 75, 100, 150, 200, 300, 400, None]  # bikes moved per night; None = no limit
@@ -28,30 +29,30 @@ MOVE_COST = 1e-3  # tiny cost per bike moved: never move a bike for zero benefit
 
 
 # --- Policies ----------------------------------------------------------------
-def solve_plan(st, g, b, budget):
+def solve_plan(st, g, b, budget, solver=None):
     """Formulation 1: choose each station's 6am level y_i to minimise expected
-    morning failures, moving at most `budget` bikes between stations."""
-    m = gp.Model("overnight")
-    m.Params.OutputFlag = 0
+    morning failures, moving at most `budget` bikes between stations.
+    Returns (levels y, (variables, constraints), optimal objective)."""
+    m = pulp.LpProblem("overnight", pulp.LpMinimize)
     ids = list(st.index)
     # z[i, y] = 1 if station i starts the morning with exactly y bikes
-    z = {(i, y): m.addVar(vtype=GRB.BINARY) for i in ids for y in range(st.capacity[i] + 1)}
-    p = {i: m.addVar(vtype=GRB.INTEGER, lb=0, ub=int(b[i])) for i in ids}  # picked up
-    q = {i: m.addVar(vtype=GRB.INTEGER, lb=0, ub=int(st.capacity[i])) for i in ids}  # dropped
+    z = {(i, y): m.add_variable(f"z_{i}_{y}", cat="Binary")
+         for i in ids for y in range(st.capacity[i] + 1)}
+    p = {i: m.add_variable(f"p_{i}", 0, int(b[i]), "Integer") for i in ids}               # picked up
+    q = {i: m.add_variable(f"q_{i}", 0, int(st.capacity[i]), "Integer") for i in ids}    # dropped
+    m += (pulp.lpSum(float(g[i][y]) * z[i, y] for (i, y) in z)
+          + MOVE_COST * pulp.lpSum(p.values()))                                          # objective
     for i in ids:
         levels = range(st.capacity[i] + 1)
-        m.addConstr(gp.quicksum(z[i, y] for y in levels) == 1)                       # one level
-        m.addConstr(gp.quicksum(y * z[i, y] for y in levels) == b[i] - p[i] + q[i])  # balance
-    m.addConstr(gp.quicksum(p.values()) == gp.quicksum(q.values()))  # vans only move bikes
+        m += pulp.lpSum(z[i, y] for y in levels) == 1                                   # one level
+        m += pulp.lpSum(y * z[i, y] for y in levels) == int(b[i]) - p[i] + q[i]         # balance
+    m += pulp.lpSum(p.values()) == pulp.lpSum(q.values())   # vans only move bikes
     if budget is not None:
-        m.addConstr(gp.quicksum(p.values()) <= budget)               # overnight budget
-    m.setObjective(gp.quicksum(g[i][y] * z[i, y] for (i, y) in z)
-                   + MOVE_COST * gp.quicksum(p.values()), GRB.MINIMIZE)
-    m.optimize()
-    assert m.Status == GRB.OPTIMAL, m.Status
-    y = pd.Series({i: round(b[i] - p[i].X + q[i].X) for i in ids})
-    size = (m.NumVars, m.NumConstrs)
-    return y, size
+        m += pulp.lpSum(p.values()) <= budget                # overnight budget
+    stats = S.solve(m, solver)
+    assert stats.status == pulp.LpSolveStatus.Optimal, stats.status
+    y = pd.Series({i: round(int(b[i]) - p[i].value() + q[i].value()) for i in ids})
+    return y, (stats.num_variables, stats.num_constraints), stats.objective
 
 
 def rule_fill_half(st, b, budget):
@@ -93,7 +94,7 @@ def evaluate(st, ev, g, test_days):
         for budget in BUDGETS[1:]:
             for policy in ("Fill to 50% rule", "Optimised"):
                 if policy == "Optimised":
-                    y, size = solve_plan(st, g, b, budget)
+                    y, size, _ = solve_plan(st, g, b, budget)
                     sizes.add(size)
                 else:
                     y = rule_fill_half(st, b, budget)
@@ -176,7 +177,7 @@ def main():
     g = M.failure_curves(ev, st, train)
 
     df, plans, sizes = evaluate(st, ev, g, test)
-    print(f"model size (vars, constraints): {sorted(sizes)}  license limit 2000 each")
+    print(f"solver {S.SOLVER}; model size (vars, constraints): {sorted(sizes)}")
     s = summarise(df)
     df.to_csv(config.TABLES / "rebalancing_by_night.csv", index=False)
     s.round(3).to_csv(config.TABLES / "rebalancing_results.csv", index=False)

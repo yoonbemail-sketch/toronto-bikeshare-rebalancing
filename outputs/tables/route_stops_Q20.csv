@@ -1,13 +1,13 @@
 stop,station,bikes
-1,Bay St / Wellesley St W,19
-2,Yonge St / Dundas Sq,-9
-3,Queen St W / John St,-5
-4,King St W / Charlotte St,9
-5,Fort York  Blvd / Capreol Ct,5
-6,Bay St / Albert St,-17
-7,Wellington St W / Blue Jays Way,6
-8,Nelson St / Duncan St,-8
-9,Bathurst St / Front St W,20
-10,College St / Huron St,-7
-11,Bay St / College St (East Side),-9
-12,Wellesley Station Green P,11
+1,Wellesley Station Green P,11
+2,Bay St / College St (East Side),-9
+3,College St / Huron St,-7
+4,Bathurst St / Front St W,20
+5,Nelson St / Duncan St,-8
+6,Wellington St W / Blue Jays Way,5
+7,Bay St / Albert St,-17
+8,Fort York  Blvd / Capreol Ct,5
+9,King St W / Charlotte St,10
+10,Queen St W / John St,-5
+11,Yonge St / Dundas Sq,-9
+12,Bay St / Wellesley St W,19

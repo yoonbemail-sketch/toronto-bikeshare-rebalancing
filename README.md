@@ -8,7 +8,8 @@
 Each weekday morning, commuters empty some downtown Bike Share stations and fill
 others. Riders then find no bike to take, or no dock to return to. This project
 uses a year of public trip data to measure that imbalance. It then builds two
-Gurobi models: one decides how many bikes each station should hold at the start
+optimization models (mixed-integer programs, solved with the open-source HiGHS
+solver and cross-checked against Gurobi): one decides how many bikes each station should hold at the start
 of the morning, and one routes a van to move them. The result is compared with
 doing nothing and with a simple rule of thumb.
 
@@ -21,7 +22,7 @@ downtown stations that overnight repositioning can help:
 |---|---|---|
 | No rebalancing | 0 | **73.7** per morning (3.9% of station visits) |
 | Rule of thumb: fill every station to 50% | 73 | **82.1** (11% *worse* than doing nothing) |
-| **Optimised plan (Gurobi MIP)** | 75 | **27.8 (−62%)** |
+| **Optimised plan (MIP)** | 75 | **27.7 (−62%)** |
 
 - **The optimised plan beat no rebalancing on all 43 test mornings.**
 - **75 bikes per night is about four loads for a 20-bike van.** Beyond 75–100
@@ -166,7 +167,8 @@ stations, not overnight ones.
 Scripts: [src/morning.py](src/morning.py) (replay and failure curves),
 [src/rebalance.py](src/rebalance.py) (overnight plan and evaluation),
 [src/routing.py](src/routing.py) (van route). The formulations are written out
-in [docs/PLAN.md](docs/PLAN.md).
+in [docs/PLAN.md](docs/PLAN.md). Both models are solved with HiGHS; Gurobi reaches
+the same optimal objective (see [How to run](#how-to-run)).
 
 ### Overnight repositioning
 
@@ -174,8 +176,8 @@ in [docs/PLAN.md](docs/PLAN.md).
 May–Aug training mornings gives the expected failures *g(y)*. The model picks
 one level per station to minimise total expected failures. Bikes can only be
 moved between stations, and at most a budget *B* of bikes can be moved per
-night. The model has 1,225 variables and 76 constraints, inside the free
-license's 2,000 limit, and each night solves in a fraction of a second.
+night. The model has 1,225 variables and 76 constraints and solves in under a
+second per night with HiGHS. It is also small enough for Gurobi's free licence.
 
 **Evaluation.** For each Sep–Oct test night:
 1. Estimate the no-rebalancing 6am inventory.
@@ -188,8 +190,8 @@ The test mornings are never used to build the plan.
 
 | Bikes moved per night | 0 | 25 | 50 | 75 | 100 | no limit (142) |
 |---|---|---|---|---|---|---|
-| Optimised: failures per morning | 73.7 | 46.3 | 32.9 | 27.8 | 27.1 | 28.8 |
-| 50% rule: failures per morning | 73.7 | 74.9 | 79.3 | 82.1 | 84.1 | 84.8 |
+| Optimised: failures per morning | 73.7 | 46.3 | 32.9 | 27.7 | 27.2 | 28.8 |
+| 50% rule: failures per morning | 73.7 | 74.9 | 79.3 | 82.1 | 84.0 | 84.8 |
 
 - **Diminishing returns:** the first 25 bikes remove 27 failures. The step from
   75 to 100 removes less than one. Beyond about 100 bikes the plan starts
@@ -198,7 +200,7 @@ The test mornings are never used to build the plan.
   reported, not only the best point.
 - **Empty stations are easier to fix than full ones.** At 75 bikes, failed
   pickups fall from 39.1 to 8.6 per morning, and failed returns fall from 34.6
-  to 19.2. The plan is limited by the number of empty docks it can create in the
+  to 19.1. The plan is limited by the number of empty docks it can create in the
   core, because those bikes must fit somewhere else.
 
 Full results: [rebalancing_results.csv](outputs/tables/rebalancing_results.csv),
@@ -224,7 +226,7 @@ model has 336 variables and 326 constraints and solves to proven optimality.
 
 | Van capacity | Optimised route | Greedy nearest-useful route |
 |---|---|---|
-| 10 bikes | 28.5 km, 28 of 126 not done | 21.1 km, 51 not done |
+| 10 bikes | 24.9 km, 29 of 126 not done | 21.1 km, 51 not done |
 | 20 bikes | 24.9 km, **1** not done | 20.2 km, **36** not done |
 | 30 bikes | 20.8 km, 0 not done | 20.2 km, 10 not done |
 
@@ -257,7 +259,7 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 
 | Assumption | Value | Why |
 |---|---|---|
-| Study subset | 40 busiest downtown stations (13 City neighbourhoods; see Data) | Must fit the free Gurobi license (≤ 2,000 variables/constraints) |
+| Study subset | 40 busiest downtown stations (13 City neighbourhoods; see Data) | Keeps every model inside Gurobi's free licence (≤ 2,000 variables), so either solver can reproduce the results |
 | Season | Weekdays, May–October | Peak season, when imbalance is worst |
 | Protected window | Weekdays, 6–10am | Commuter peak; confirmed or revised in Phase 2 |
 | Van capacity | 10, 20 and 30 bikes (20 central) | No public figure exists, so it is run as scenarios ([current practice](docs/CURRENT_PRACTICE.md)) |
@@ -291,9 +293,9 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
   experienced.
 - **Season drift.** Plans learned on May–Aug lose a little accuracy on Sep–Oct,
   which shows up once more than about 100 bikes are moved.
-- **Routing covers one van and one 12-station cluster,** sized for the free
-  license. A full night with several vans would need decomposition, for example
-  routing each cluster separately, or a full license.
+- **Routing covers one van and one 12-station cluster,** sized to fit Gurobi's
+  free licence too. HiGHS has no size cap, so routing a full night with several
+  vans is the natural next step.
 - **Distances** are straight-line × 1.3, not road-network shortest paths.
 
 ## How to run
@@ -303,8 +305,23 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 ./run_all.sh          # download → clean → EDA → optimise and evaluate → route
 ```
 
-Requires a Gurobi license; the free restricted license is enough. The first run
-downloads about 230 MB and takes a few minutes.
+**Solver.** The models are written once in PuLP ([src/solver.py](src/solver.py)).
+By default they are solved with **HiGHS**, which is open source, needs no
+licence and is installed by `requirements.txt`. To use **Gurobi** instead:
+
+```bash
+.venv/bin/pip install gurobipy
+SOLVER=gurobi ./run_all.sh     # the free restricted licence is enough here
+```
+
+When Gurobi is available, [src/solver_check.py](src/solver_check.py) solves a
+sample with both solvers. HiGHS and Gurobi reached the same optimal objective on
+24/24 overnight instances and 3/3 routing instances
+([solver_check.csv](outputs/tables/solver_check.csv)). When two plans tie on
+expected failures, the solvers may pick different ones, so per-morning results can
+differ by a fraction of a failure.
+
+The first run downloads about 230 MB and takes a few minutes.
 
 ## Repository layout
 

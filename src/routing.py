@@ -8,13 +8,13 @@ The van starts and ends at the depot, may leave the depot loaded and bring
 bikes back. Compared with a nearest-neighbour route for each van capacity.
 Outputs: outputs/tables/routing_results.csv, outputs/figures/route_map.png
 """
-import gurobipy as gp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from gurobipy import GRB
+import pulp
 
 import config
+import solver as S
 from eda import BLUE, ORANGE, INK, INK2, MUTED, SURFACE, save
 
 PENALTY_KM = 5.0  # cost (km-equivalent) of each planned bike move left undone
@@ -28,40 +28,43 @@ def distances(lat, lon):
     return 6371 * 2 * np.arcsin(np.sqrt(h)) * config.ROAD_CIRCUITY
 
 
-def solve_route(r, D, Q):
+def solve_route(r, D, Q, solver=None):
     """r[k] = planned change at node k (node 0 = depot, r[0] = 0). Returns
-    (stop order, bikes moved at each stop, km, undone bikes, model size)."""
+    (stop order, bikes moved at each stop, km, undone bikes, model size, MIP gap,
+    objective)."""
     n = len(r)
-    S = range(1, n)
-    m = gp.Model("route")
-    m.Params.OutputFlag = 0
-    m.Params.TimeLimit = 60
+    stations = range(1, n)
+    m = pulp.LpProblem("route", pulp.LpMinimize)
     arcs = [(i, j) for i in range(n) for j in range(n) if i != j]
-    x = m.addVars(arcs, vtype=GRB.BINARY)            # van drives i -> j
-    f = m.addVars(arcs, lb=0, ub=Q)                  # bikes on board on arc i -> j
-    d = {k: m.addVar(lb=min(0, r[k]), ub=max(0, r[k])) for k in S}  # bikes actually moved
-    u = m.addVars(S, lb=1, ub=n - 1)                 # visit order (MTZ)
+    x = {(i, j): m.add_variable(f"x_{i}_{j}", cat="Binary") for i, j in arcs}  # van drives i -> j
+    f = {(i, j): m.add_variable(f"f_{i}_{j}", 0, Q) for i, j in arcs}  # bikes on board on i -> j
+    d = {k: m.add_variable(f"d_{k}", min(0, r[k]), max(0, r[k])) for k in stations}  # bikes moved
+    u = {k: m.add_variable(f"u_{k}", 1, n - 1) for k in stations}  # visit order (MTZ)
+    undone = pulp.lpSum(abs(r[k]) - (d[k] if r[k] > 0 else -d[k]) for k in stations)
+    m += pulp.lpSum(float(D[i, j]) * x[i, j] for i, j in arcs) + PENALTY_KM * undone
     for k in range(n):
-        m.addConstr(x.sum(k, "*") == 1)              # leave every node once
-        m.addConstr(x.sum("*", k) == 1)              # enter every node once
-    for k in S:
-        m.addConstr(f.sum("*", k) - f.sum(k, "*") == d[k])  # load drops by bikes dropped
+        m += pulp.lpSum(x[k, j] for j in range(n) if j != k) == 1       # leave every node once
+        m += pulp.lpSum(x[j, k] for j in range(n) if j != k) == 1       # enter every node once
+    for k in stations:
+        m += (pulp.lpSum(f[j, k] for j in range(n) if j != k)
+              - pulp.lpSum(f[k, j] for j in range(n) if j != k)) == d[k]  # load drops by bikes dropped
     for i, j in arcs:
-        m.addConstr(f[i, j] <= Q * x[i, j])          # capacity; no load on unused arcs
+        m += f[i, j] <= Q * x[i, j]                  # capacity; no load on unused arcs
         if i != 0 and j != 0:
-            m.addConstr(u[i] - u[j] + (n - 1) * x[i, j] <= n - 2)  # no subtours
-    undone = gp.quicksum(abs(r[k]) - (d[k] if r[k] > 0 else -d[k]) for k in S)
-    m.setObjective(gp.quicksum(D[i, j] * x[i, j] for i, j in arcs) + PENALTY_KM * undone)
-    m.optimize()
+            m += u[i] - u[j] + (n - 1) * x[i, j] <= n - 2  # no subtours
+    stats = S.solve(m, solver, time_limit=120)
+    used = {a for a in arcs if x[a].value() > 0.5}
     order, k = [0], 0
     while True:
-        k = next(j for j in range(n) if j != k and x[k, j].X > 0.5)
+        k = next(j for (i, j) in used if i == k)
         if k == 0:
             break
         order.append(k)
-    km = sum(D[i, j] for i, j in arcs if x[i, j].X > 0.5)
-    moved = {k: round(d[k].X) for k in S}
-    return order, moved, km, round(undone.getValue()), (m.NumVars, m.NumConstrs), m.MIPGap
+    km = sum(D[a] for a in used)
+    moved = {k: round(d[k].value()) for k in stations}
+    n_undone = sum(abs(r[k]) - abs(moved[k]) for k in stations)
+    return (order, moved, km, n_undone, (stats.num_variables, stats.num_constraints),
+            S.gap(stats), stats.objective)
 
 
 def nearest_neighbour(r, D, Q):
@@ -136,15 +139,15 @@ def main():
 
     rows, routes = [], {}
     for Q in config.VAN_CAPACITIES:
-        order, moved, km, undone, size, gap = solve_route(r, D, Q)
+        order, moved, km, undone, size, gap, _ = solve_route(r, D, Q)
         nn = nearest_neighbour(r, D, Q)
         rows += [dict(van_capacity=Q, method="Optimised route", km=km, undone=undone,
                       moved=sum(abs(v) for v in moved.values()), mip_gap=gap),
                  dict(van_capacity=Q, method="Greedy nearest-useful", km=nn[2], undone=nn[3],
                       moved=sum(abs(v) for v in nn[1].values()))]
         routes[Q] = [("Greedy nearest-useful route", nn[0], nn[1], nn[2], nn[3]),
-                     ("Optimised route (Gurobi)", order, moved, km, undone)]
-        print(f"Q={Q}: optimised {km:.1f} km, {undone} undone (size {size}, gap {gap:.1%}) | "
+                     ("Optimised route (MIP)", order, moved, km, undone)]
+        print(f"Q={Q} [{S.SOLVER}]: optimised {km:.1f} km, {undone} undone (size {size}, gap {gap:.1%}) | "
               f"greedy {nn[2]:.1f} km, {nn[3]} undone")
     res = pd.DataFrame(rows)
     res.round(2).to_csv(config.TABLES / "routing_results.csv", index=False)
