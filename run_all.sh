@@ -16,4 +16,5 @@ $PY rebalance.py wide      # Phase 3d: same model on the 145 busiest stations
 $PY multivan.py wide       # Phase 3d: whole wide plan in van tours
 $PY snapshots.py  # Phase 4: observed station counts for 2025 (926 MB archive, downloaded once)
 $PY observed.py   # Phase 4: validate the replay; compare plans with what the operator did
+$PY censored.py   # Phase 4b: time at the cap; fill in missing riders and rerun Phase 4
 $PY solver_check.py  # HiGHS vs Gurobi on a sample (skipped if Gurobi is absent)

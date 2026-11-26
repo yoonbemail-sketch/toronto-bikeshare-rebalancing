@@ -100,6 +100,17 @@ def replay_path(times, deltas, capacity, start, at):
 
 
 # --- 0. Coverage and consistency of the archive --------------------------------
+def covered_mornings(times, days):
+    """A morning is covered if a snapshot falls within 15 min of 6am and no gap
+    before 10am exceeds 35 min. times: sorted Series of snapshot times."""
+    ok = []
+    for d in days:
+        six, ten = d + 6 * H, d + 10 * H
+        edges = pd.DatetimeIndex([six, *times[(times >= six) & (times <= ten)], ten]).asi8 / 6e10
+        ok.append(((times - six).abs().min() <= pd.Timedelta(minutes=15)) and np.diff(edges).max() <= 35)
+    return pd.Series(ok, index=days)
+
+
 def coverage(st, snap, trips, days):
     """How well the archive covers the season, whether its counts move with the
     trips, and how its 2025 dock counts compare with the 2026 feed used in Phase 3."""
@@ -110,13 +121,7 @@ def coverage(st, snap, trips, days):
     out["median_gap_min"] = gap.median()
     out["longest_gap_start"], out["longest_gap_hours"] = times[gap.idxmax() - 1], gap.max() / 60
 
-    # A morning is usable if a snapshot falls within 15 min of 6am and no gap before 10am exceeds 35 min
-    ok = []
-    for d in days:
-        six, ten = d + 6 * H, d + 10 * H
-        edges = pd.DatetimeIndex([six, *times[(times >= six) & (times <= ten)], ten]).asi8 / 6e10
-        ok.append(((times - six).abs().min() <= pd.Timedelta(minutes=15)) and np.diff(edges).max() <= 35)
-    ok = pd.Series(ok, index=days)
+    ok = covered_mornings(times, days)
     out["usable_mornings_train"], out["working_days_train"] = ok[days.month <= 8].sum(), (days.month <= 8).sum()
     out["usable_mornings_test"], out["working_days_test"] = ok[days.month >= 9].sum(), (days.month >= 9).sum()
 
@@ -203,19 +208,28 @@ def validation_summary(v, starts):
 
 
 # --- 2-4. Policies on observed starting states ----------------------------------
-def evaluate(st, ev, snap, trips, train, test, b_sim):
-    mornings = [M.morning(ev, d) for d in train]
-
+def make_curve(mornings):
+    """Failure curves from a list of mornings ({station_id: +1/-1 events}).
+    Returns curve(sid, cap): g(y) for y = 0..cap, averaged over the mornings."""
     @lru_cache(maxsize=None)
     def curve(sid, cap):
-        """g(y) for this station at usable capacity `cap`, from the training mornings."""
         levels = np.arange(cap + 1)
         total = np.zeros(cap + 1)
         for m in mornings:
             fp, fr, _ = M.replay(m.get(sid, []), cap, levels)
             total += fp + fr
         return total / len(mornings)
+    return curve
 
+
+def evaluate(st, ev, snap, trips, train, test, b_sim, train_mornings=None, test_draws=None):
+    """Score every policy on each test morning. By default the failure curves come
+    from the recorded training mornings and each policy is replayed over the
+    recorded test morning. censored.py passes filled-in demand instead:
+    train_mornings, a list of event dicts for the curves, and test_draws,
+    {day: [event dict, ...]}, scored one by one and averaged (each draw's total is
+    kept in `by_draw`)."""
+    curve = make_curve([M.morning(ev, d) for d in train] if train_mornings is None else train_mornings)
     rows, states = [], []
     for day in test:
         six, nine_pm = day + 6 * H, day - 24 * H + config.NIGHT_START * H
@@ -238,14 +252,18 @@ def evaluate(st, ev, snap, trips, train, test, b_sim):
         net = b_obs - b_none
         net = net[net.abs() >= config.MOVE_THRESHOLD]
         effort = int(max(net.clip(lower=0).sum(), -net.clip(upper=0).sum()))
-        events = M.morning(ev, day)
+        draws = [M.morning(ev, day)] if test_draws is None else test_draws[day]
         g = {i: curve(i, int(cap[i])) for i in ids}
 
         def score(policy, budget, y, moved=None):
-            fp, fr = R.morning_failures(st_d, events, y)
+            f = np.array([R.morning_failures(st_d, e, y) for e in draws])
+            fp, fr = f.mean(axis=0) if len(draws) > 1 else f[0].tolist()
             moved = int((b_none - y).clip(lower=0).sum()) if moved is None else moved
-            rows.append(dict(day=day, policy=policy, budget=budget, stations=len(ids),
-                             moved=moved, fail_pick=fp, fail_ret=fr))
+            row = dict(day=day, policy=policy, budget=budget, stations=len(ids),
+                       moved=moved, fail_pick=fp, fail_ret=fr)
+            if len(draws) > 1:
+                row["by_draw"] = f.sum(axis=1)
+            rows.append(row)
 
         score("No overnight moves", 0, b_none)
         score("Actual 2025 operation", "operator", b_obs, moved=effort)

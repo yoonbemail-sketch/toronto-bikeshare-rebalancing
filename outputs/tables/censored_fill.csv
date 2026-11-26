@@ -1,0 +1,5 @@
+period,version,recorded,added_pickups,added_returns,moved_from_nearby,trip_returns_added,removed
+test,"Filled in, moved from nearby",1886.3,112.37,79.63,127.62,5.03,127.62
+test,"Filled in, nothing removed",1886.3,112.37,79.63,0.0,16.79,0.0
+train,"Filled in, moved from nearby",1770.65,76.88,56.2,94.29,3.13,94.29
+train,"Filled in, nothing removed",1770.65,76.88,56.2,0.0,12.19,0.0

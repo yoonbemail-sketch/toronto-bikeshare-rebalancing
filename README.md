@@ -1,8 +1,8 @@
 # Toronto Bike Share: Overnight Rebalancing with Optimization
 
-> **Status:** complete through Phase 4 (data → analysis → optimization →
-> evaluation → check against observed station counts). Every number below is
-> reproduced by `./run_all.sh`.
+> **Status:** complete through Phase 4b (data → analysis → optimization →
+> evaluation → check against observed station counts → demand the trip data
+> misses). Every number below is reproduced by `./run_all.sh`.
 
 ## The problem in one paragraph
 
@@ -21,31 +21,51 @@ The test set is 43 held-out working-day mornings in Sep–Oct 2025, at the 37
 downtown stations that overnight repositioning can help. Each night starts from
 the station counts actually observed in 2025
 ([Phase 4](#checked-against-observed-station-counts)), and every policy is
-replayed against the same real 6–10am trips:
+replayed against the same real 6–10am trips. The trip data leaves out riders
+who found a station empty or full, so the last column adds them back
+([Phase 4b](#missing-demand-how-much-and-do-the-results-hold)). It is a range,
+because what those riders did next is not recorded:
 
-| Overnight policy (9pm–6am) | Bikes moved per night | Failed pickups + returns, 6–10am (replayed) |
-|---|---|---|
-| No overnight moves | 0 | 60.3 per morning |
-| **What the operator actually did** | about 31 | **37.9** |
-| Optimised plan (MIP), same effort | about 31 | 37.3 |
-| **Optimised plan (MIP)** | 50 | **29.7 (−22% vs the operator)** |
-| Rule of thumb: fill every station to 50% | 50 | 73.8 (worse than no moves) |
+| Overnight policy (9pm–6am) | Bikes moved per night | Failed pickups + returns, 6–10am (replayed, recorded trips) | Same, with missing riders added back |
+|---|---|---|---|
+| No overnight moves | 0 | 60.3 per morning | 204–229 |
+| **What the operator actually did** | about 31 | **37.9** | **192–216** |
+| Optimised plan (MIP), same effort | about 31 | 37.3 | 161–182 (−16% vs the operator) |
+| **Optimised plan (MIP)** | 50 | **29.7 (−22% vs the operator)** | **142–160 (−26%)** |
+| Rule of thumb: fill every station to 50% | 50 | 73.8 (worse than no moves) | 204–230 (no better than no moves) |
 
+- **Half of all station-mornings run out of bikes or docks.** Measured
+  straight from the 2025 station snapshots, with no model: the 37 stations had
+  no rentable bike or no free dock 12.3% of the 6–10am time, and 51.6% of
+  station-mornings hit one or the other at least once. Bikes run out from 6am
+  at stations that ended the night low; docks run out after 8:30 as the
+  office core fills.
+- **The trip data misses about 190 riders a morning, and adding them back
+  strengthens the case for the plan.** About 112 pickups and 80 returns per
+  test morning are missing, 10% on top of the recorded ones. With them added
+  back, the plan beats the operator on all 43 mornings at the same effort,
+  and each station's best starting level hardly changes (correlation
+  0.94–0.95 with recorded trips). Replayed failure counts on recorded trips are about
+  five times too low, so compare policies, not absolute counts.
 - **The replay matches real station counts.** Started from the observed 6am
   count, the replayed count is within one bike of the later snapshots 89.5% of
   the time: 98.9% in the first hour, falling to 78.0% in the fourth as
   unrecorded changes such as daytime van moves build up.
-- **At equal effort, the plan only ties the operator** (37.3 vs 37.9, better
-  on 21 of 43 mornings). The gain comes from doing more: with 50 bikes a night
-  the plan beats actual practice on 33 of 43 mornings. Beyond about 50 bikes,
-  extra moves stop helping.
+- **On recorded trips, the plan only ties the operator at equal effort**
+  (37.3 vs 37.9, better on 21 of 43 mornings), and beats it on 33 of 43 with
+  50 bikes a night. Recorded trips show little gain beyond about 50 bikes.
+  With the missing riders added back, the plan wins every morning at equal
+  effort and failures keep falling up to 100 bikes, the largest budget tested
+  (−39% to −41% vs the operator). The 50-bike ceiling partly comes from
+  demand the trip data hides.
 - **Phase 3's simulated starting state was off.** Without station counts,
   Phase 3 simulated the 6am state. It was within 3 bikes of the observed count
   on only 44% of station-mornings, and its baseline (73.7 failures) and
   improvement (−62%) were overstated. The ranking of the policies held.
 - **The intuitive rule backfires.** Residential edge stations need to start
   nearly full and the office core nearly empty. Evening everything out to 50%
-  moves bikes the wrong way.
+  moves bikes the wrong way: worse than no moves on recorded trips, and no
+  better than no moves with the missing riders added back.
 - **Sequencing matters once the van is full.** For one example night, an
   optimised van route completes 125 of 126 planned pickups and drops in 24.9 km.
   A greedy "nearest useful station" route drives 20.2 km but leaves 36 undone.
@@ -62,8 +82,10 @@ replayed against the same real 6–10am trips:
 - **The valet stations are confirmed.** At the three stations Phase 2 flagged,
   about 495 bikes a day disappear without a trip, 470 of them between 6 and
   11am, and about 238 reappear, mostly between 3 and 8pm.
-- Failure counts are replayed: a likely undercount, and failures avoided is an
-  estimate, not a bound; see [Limitations](#limitations).
+- Failure counts are replayed estimates. On recorded trips they are far too
+  low; with missing riders added back they depend on how those riders are
+  modelled. Compare policies, not absolute counts; see
+  [Limitations](#limitations).
 
 ## Data
 
@@ -128,6 +150,9 @@ Each issue is handled in [src/clean.py](src/clean.py) and counted in
 5. **Check against observed station counts (Phase 4):** validate the replay,
    start every policy from the real 2025 state, and add what the operator
    actually did as a fourth policy.
+6. **Missing demand (Phase 4b):** measure how often stations were empty or
+   full, fill in the riders the trip data misses, and rerun the Phase 4
+   comparison.
 
 The full plan, with the formulations in mathematical notation, is in
 [docs/PLAN.md](docs/PLAN.md). How Bike Share Toronto rebalances today, and how
@@ -438,7 +463,9 @@ usable capacity (rentable bikes plus free docks) observed at 6am.
   with 50 bikes it reaches 29.7 (−22%). 75 bikes adds little and 100 is worse,
   because the plan fits May–Aug patterns that don't fully hold in Sep–Oct. From
   observed states, the diminishing-returns point is about 50 bikes, not 75 as in
-  Phase 3.
+  Phase 3. That holds for recorded trips only: with the missing riders added
+  back, failures keep falling up to 100 bikes
+  ([Phase 4b](#missing-demand-how-much-and-do-the-results-hold)).
 - **The operator brings bikes in; the model does not.** Overnight trips drain
   about 26 bikes from this group (448 at 9pm, 421 by 6am without moves). The
   operator drops about 29 bikes a night at these stations, mostly in one or two
@@ -473,15 +500,123 @@ explain, of 3 bikes or more between snapshots, is counted as an operator move:
 Hourly figures: [observed_operator_moves.csv](outputs/tables/observed_operator_moves.csv).
 Evening hours are scaled up for the archive's sparser snapshots.
 
+### Missing demand: how much, and do the results hold?
+
+The trip data records only riders who found a bike or a free dock. While a
+station is empty its pickups go unrecorded, and while it is full its returns
+do. The trips were recorded under the operator's real 2025 station counts, so
+replaying them can never charge that operation for the riders it turned away,
+or credit a plan for serving them. The Phase 4 comparison therefore leans
+toward what the operator did. Phase 4b measures how often this happened and
+reruns the comparison with the missing riders added back. Script:
+[src/censored.py](src/censored.py).
+
+**Measured: stations run out every morning.** This comes straight from the
+snapshots, with no replay. On working-day mornings, May–Oct 2025, the 37
+stations had no rentable bike at 7.5% of 6–10am snapshots and no free dock at
+4.8%, so one or the other 12.3% of the time. Half of station-mornings (51.6%)
+hit one at least once, and 34 of the 37 stations spend 5% or more of the
+morning at one. Bikes are already gone at 6am at stations that ended the night
+low, and run out again around 8:30. Docks run out after 8:30 as the office core
+fills. Snapshots are taken about every 16 minutes, at times unrelated to a
+station's state, so the shares of time are unbiased. The share of
+station-mornings is a minimum, because a short spell can fall between two
+snapshots.
+
+![Time at the cap](outputs/figures/censored_time_at_cap.png)
+
+**Filling in the missing riders.**
+
+1. Rebuild each station's count minute by minute, 6–10am, twice: forward from
+   the previous snapshot and back from the next, with the recorded trips. They
+   disagree only when the operator moved bikes between snapshots, at a time
+   the data doesn't show; such a minute counts as half empty (or half full).
+   The rebuilt count is empty 8.9% and full 6.5% of test-morning minutes,
+   against 8.6% and 6.5% of snapshots, and per station the two differ by under
+   one percentage point on average.
+2. Estimate each station's pickup rate per 15-minute slot from the minutes it
+   had a bike, and its return rate from the minutes it had a free dock. Scale
+   both by how busy that morning was.
+3. Add random pickups during the minutes it was empty, and random returns
+   during the minutes it was full.
+
+What a turned-away rider did next is not recorded, so two versions bracket it:
+
+- *Nothing removed:* each added pickup is a whole lost trip, so its return is
+  added too, at a destination drawn from that station's recorded trips. A
+  rider turned away from a full dock counts at the station they wanted and
+  also keeps the recorded return at the one they used, so this version adds
+  the most demand.
+- *Moved from nearby:* the rider used another modelled station within 500 m,
+  within 15 minutes. That recorded pickup or return is moved to the station
+  they wanted. Added events with no such match are handled as above.
+
+On a test morning this adds about 112 pickups and 80 returns, against 1,886
+recorded at these stations (10%). In the second version, two thirds of them
+match a recorded event nearby. Every policy is scored on 10 random filled-in versions
+of each test morning; plans learn from filled-in training mornings made the
+same way. Training uses the 65 May–Aug mornings the archive covers, since
+without snapshots there is no way to tell when a station was capped, so the
+recorded column below is rerun on those same 65 mornings.
+
+| Overnight policy | Bikes moved per night | Recorded trips | Filled in, nothing removed | Filled in, moved from nearby | Mornings better than the operator (filled in) |
+|---|---|---|---|---|---|
+| No overnight moves | 0 | 60.3 | 228.8 | 204.0 | 9 / 9 of 43 |
+| What the operator actually did | 31 | 37.9 | 216.3 | 192.1 | |
+| Optimised, same effort as the operator | 31 | 37.9 | 182.3 (−16%) | 161.2 (−16%) | 43 / 43 |
+| Optimised | 25 | 40.0 | 189.5 (−12%) | 167.4 (−13%) | 41 / 41 |
+| Optimised | 50 | 30.0 | 159.9 (−26%) | 142.2 (−26%) | 43 / 43 |
+| Optimised | 75 | 29.4 | 138.9 (−36%) | 125.6 (−35%) | 43 / 43 |
+| Optimised | 100 | 32.6 | 126.6 (−41%) | 117.4 (−39%) | 43 / 43 |
+| Fill to 50% rule | 50 | 73.8 | 230.4 | 204.3 | 13 / 13 |
+
+Failed pickups + returns per morning, 6–10am; percentages are against the
+operator in the same column. Across the 10 random fill-ins, every total stays
+within 5 of its average. In every one of them each optimised plan beats the
+operator and the operator beats no moves; only the 50% rule and no moves swap
+places.
+
+- **Replayed counts on recorded trips are far too low.** With the missing
+  riders added back, the operator's mornings have 192–216 replayed failures,
+  not 37.9. Recorded trips can rank policies, but cannot say how many riders
+  were turned away.
+- **The ranking holds.** The optimised plan beats the operator, which beats no
+  overnight moves. The 50% rule is no better than no moves, and beats the
+  operator on only 13 of 43 mornings.
+- **Recorded trips understated the plan.** At the operator's effort the plan
+  only tied it on recorded trips; with the missing riders it wins on every
+  test morning, by about 16%.
+- **The 50-bike ceiling does not hold.** On recorded trips, gains stop at about
+  50 bikes. Filled in, failures keep falling to 100 bikes, the largest budget
+  tested. Part of this may come from the fill-in itself: the plan learns from
+  filled-in mornings made the same way as the test ones.
+- **The plan's shape holds, and gets sharper.** Each station's best 6am level
+  (the middle of its lowest-failure range, at its usual capacity) correlates
+  0.94–0.95 between recorded and filled-in demand. The changes point the same
+  way as before, only further: stations that run empty should start fuller,
+  and stations that fill should start emptier. Bay St / College St had no bike
+  in 26% of test-morning snapshots. Its recorded trips miss about 6 pickups a
+  morning on top of the 22 recorded, so its best start rises from 18% full to
+  32–39%. Widmer St / Adelaide St W rises from 55% to 91%; Queens Quay E /
+  Lower Sherbourne, which fills, falls from 71% to 50%.
+
+Results: [censored_results.csv](outputs/tables/censored_results.csv), per
+station (time at the cap, missing riders, best 6am level):
+[censored_stations.csv](outputs/tables/censored_stations.csv), fill-in counts:
+[censored_fill.csv](outputs/tables/censored_fill.csv), by time of morning:
+[censored_cap_by_slot.csv](outputs/tables/censored_cap_by_slot.csv), summary:
+[censored_summary.csv](outputs/tables/censored_summary.csv).
+
 ### What an operator could take from this
 
 1. **Set station-specific targets from history, not a uniform fill level.**
    This is the single biggest gain, and it costs nothing but analysis.
-2. **About 50 bikes per night captures most of the benefit** for this downtown
-   group, measured from the station counts observed in 2025. That is about 20
-   more than the operator moved at these stations overnight, and it would cut
-   replayed morning failures by about a fifth. Effort beyond that has little
-   value overnight and is better spent on daytime and valet work.
+2. **Move at least 50 bikes per night** for this downtown group, about 20 more
+   than the operator moved at these stations overnight in 2025. That cuts
+   replayed morning failures by about a fifth on recorded trips, and by about
+   a quarter once the riders the data misses are added back. Recorded trips
+   suggest little value beyond 50; with the missing riders, gains continue to
+   at least 100. Where to stop is the least certain number here.
 3. **Three stations need a daytime answer, and get one.** King/Bay, Temperance
    St and Front/Bay receive several times their dock count every morning, which
    no overnight plan can fix. The 2025 counts show staff clearing about 470
@@ -520,6 +655,8 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 | Observed state (Phase 4) | Nearest snapshot within 16 minutes, moved to the exact time with the recorded trips | Snapshots arrive about every 16 minutes |
 | Usable capacity (Phase 4) | Rentable bikes + free docks at 6am, per station and morning, for every policy | Disabled bikes and docks, and docks the feed doesn't account for, cannot be used |
 | Operator move (Phase 4) | A change of 3 or more bikes that trips don't explain | Smaller changes are mostly a trip on the other side of a snapshot, or a bike becoming unrentable |
+| Missing demand (Phase 4b) | Count rebuilt per minute forward from the previous snapshot and back from the next (a minute counts half where they disagree). Each station's rate per 15-minute slot, from the minutes it had a bike (pickups) or a free dock (returns), times that morning's busyness; added at random during empty or full minutes; 10 random fill-ins | Demand during a spell cannot be observed; the slot's average is the simplest estimate, and more likely too low than too high (see [Limitations](#limitations)) |
+| Turned-away riders (Phase 4b) | Two versions: the trip is lost (nothing removed), or the rider used a modelled station within 500 m (straight line) and 15 minutes | What riders did is not recorded; the two versions bracket it |
 | Scope | Overnight rebalancing only | The real operation runs 24/7; stations overnight moves cannot fix are flagged for daytime/valet service |
 
 ## Limitations
@@ -535,6 +672,20 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
   a recorded return). Failures avoided, the gap between the baseline and a plan,
   is an estimate that could be too high or too low. Measuring failures directly
   would need minute-by-minute station counts, which are not published.
+  [Phase 4b](#missing-demand-how-much-and-do-the-results-hold) fills in the
+  missing riders, which leaves four gaps:
+  - Demand during an empty or full spell cannot be observed. The fill-in uses
+    the station's average for that slot. In the 15 minutes before a spell
+    starts, recorded demand runs 41–50% above that average, which suggests
+    spells begin in surges and the fill-in is more likely too low than too
+    high. That is not proof, because the pickups that empty a station also
+    make the minutes before it busy.
+  - Riders who have learned that a station is usually empty stop trying, and
+    leave no trace in any public data.
+  - What turned-away riders did next is bracketed by two versions, not known.
+  - Plans learn from filled-in mornings made the same way as the test ones, so
+    part of their gain under the fill-in may reflect the fill-in model. Only the
+    6–10am window is filled in; overnight trips are not.
 - **Station counts come from an unofficial archive.** Neither the City nor the
   operator publishes bikes per station over time. Phase 3 therefore simulates
   the starting level. Phase 4 uses a community archive of the live feed, which
@@ -569,7 +720,7 @@ Every assumption is set in [src/config.py](src/config.py) and can be changed the
 
 ```bash
 .venv/bin/pip install -r requirements.txt
-./run_all.sh          # download → clean → EDA → optimise and evaluate → route → check against observed counts
+./run_all.sh          # download → clean → EDA → optimise and evaluate → route → check against observed counts → missing demand
 ```
 
 **Solver.** The models are written once in PuLP ([src/solver.py](src/solver.py)).
@@ -589,7 +740,7 @@ expected failures, the solvers may pick different ones, so per-morning results c
 differ by a fraction of a failure.
 
 The first run downloads about 1.2 GB, of which 926 MB is the station-count
-archive for Phase 4. The full pipeline takes about 10 minutes,
+archive for Phase 4. The full pipeline takes about 14 minutes,
 most of it the wide-network evaluation. The archive's maintainer refreshes the
 file daily; its 2025 rows are history and should not change, but if they were
 corrected, Phase 4 numbers could move slightly.

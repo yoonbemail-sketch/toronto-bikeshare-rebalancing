@@ -68,6 +68,10 @@ Each question feeds a later decision.
   a missing rider can also hide a success that would have prevented one (an
   unrecorded pickup frees a dock for a recorded return). Failures avoided is
   therefore an estimate, not a bound in either direction.
+  *Update (Phase 4b):* the station-count archive shows when each station was
+  empty or full, so the missing pickups and returns are filled in from each
+  station's demand rate in the minutes it was not, and Phase 4 is rerun on the
+  filled-in demand (src/censored.py; results in the README).
 - **Limitation 2: no inventory history.** The open data has no historical count
   of bikes per station, so the overnight starting inventory b_i must be
   estimated. Options are listed under "Decisions for review" below.

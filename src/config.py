@@ -55,3 +55,10 @@ SNAPSHOTS_URL = ("https://github.com/ThatRandomUser23/toronto-bikeshare-data/rel
 NIGHT_START = 21                # 9pm the evening before: start of the overnight window
 SNAPSHOT_MAX_AGE = 16           # minutes: a state is read from the nearest snapshot this close
 MOVE_THRESHOLD = 3              # bikes: an unexplained change this large counts as an operator move
+
+# --- Phase 4b: demand the trip data misses (censored.py) -------------------------
+FILL_SLOT = 15                  # minutes: demand rates are estimated per station and slot of this length
+FILL_DRAWS = 10                 # random fill-ins averaged; each policy is scored on every draw
+FILL_SEED = 2025
+NEARBY_M = 500                  # ASSUMPTION: a turned-away rider tries a station at most this far away
+NEARBY_MIN = 15                 # ASSUMPTION: ... and uses it within this many minutes

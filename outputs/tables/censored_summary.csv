@@ -1,0 +1,27 @@
+,value
+snapshots,61781.0
+mornings,120.0
+station_mornings,4397.0
+no_bike_share,0.07547627911493825
+no_dock_share,0.04804065974976125
+capped_share,0.12316084233016623
+no_bike_share_test,0.08597227521302302
+no_dock_share_test,0.06515748865996863
+station_mornings_no_bike,0.33045258130543553
+station_mornings_no_dock,0.21423697975892655
+station_mornings_capped,0.515806231521492
+stations_capped_5pct_or_more,34.0
+before_spell_recorded_vs_expected_pickups_train,1.4372575682216067
+before_spell_recorded_vs_expected_returns_train,1.5021977209845236
+rebuilt_empty_share_train,0.072489604989605
+rebuilt_full_share_train,0.04038028413028413
+before_spell_recorded_vs_expected_pickups_test,1.4111897412200824
+before_spell_recorded_vs_expected_returns_test,1.5052766126779782
+rebuilt_empty_share_test,0.08923501990362455
+rebuilt_full_share_test,0.06468023255813954
+rebuilt_vs_snapshot_station_gap_empty_test,0.007536414134523448
+rebuilt_vs_snapshot_station_gap_full_test,0.003499129155236523
+"ideal_fill_corr_Filled in, nothing removed",0.9529718336391453
+"ideal_fill_mean_shift_Filled in, nothing removed",0.04596895886149454
+"ideal_fill_corr_Filled in, moved from nearby",0.9434639310268349
+"ideal_fill_mean_shift_Filled in, moved from nearby",0.023009050401682548
